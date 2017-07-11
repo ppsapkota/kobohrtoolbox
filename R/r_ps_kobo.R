@@ -25,7 +25,7 @@ print(d_forminfo$url)
 
 #loop through each form
 for (i in 1:nrow(d_forminfo)){
-  print(d_forminfo$url)
+  print(d_forminfo$url[i])
 }
 
 
