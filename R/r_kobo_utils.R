@@ -35,9 +35,7 @@ kobohr_getdata_csv<-function(url,u,pw){
   d_content <- read_csv(content(rawdata,"raw",encoding = "UTF-8"))
 }
 
-f_csv <- function(x) {
-  setDT(read_csv(content(x, "raw")))[]
-}
+
 
 #merging multiple files in a a folder
 multi_files_merge_csv = function(mypath){
