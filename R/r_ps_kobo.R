@@ -43,7 +43,7 @@ d_raw<-kobohr_getdata(formid_link,kobo_user,Kobo_pw)
 #read list of forms
 d_formlist <-read_excel("./data/formlist.xlsx",sheet=1)
 for (i in 1:nrow(d_formlist)){
-  #i=4
+  i=1
   print(d_formlist$url[i])
   d_rawi<-kobohr_getdata(d_formlist$url[i],kobo_user,Kobo_pw)
   #check if data is empty or not
@@ -73,23 +73,45 @@ d_formlist_csv<-kobohr_getforms_csv(csv_link,kobo_user,Kobo_pw)
 write_csv(d_formlist_csv,paste0("./data/","formlist_csv.csv"))
 
 
-
-
-
-
-
-
-#-------PLAYGROUND BLOCK-----------
-d_rawi<-kobohr_getdata("https://kc.humanitarianresponse.info/api/v1/data/81471",kobo_user,Kobo_pw)
-#replace "/" in the field header
-names(d_rawi)<-str_replace_all(names(d_rawi),"/","_")
-#select few fields that are relevant for coverage mapping
-d_select<-select(d_raw,group_metadata_partnercode,group_metadata_govlist,distrlist,comlist)
-#write.csv(d_rawi,paste0("data/",d_formlist$id[i],".csv"))
-write.csv(d_select,paste0("data/",d_formlist$id[i],".csv"))
-#----------PLAYGROUND BLOCK------------
-
-#curl -X GET 'https://kc.humanitarianresponse.info/api/v1/data/22845?query={"kind": "monthly"}'
-
-
-
+###-------PLAYGROUND BLOCK-----------
+  d_rawi<-kobohr_getdata("https://kc.humanitarianresponse.info/api/v1/data/81471",kobo_user,Kobo_pw)
+  #replace "/" in the field header
+  names(d_rawi)<-str_replace_all(names(d_rawi),"/","_")
+  #select few fields that are relevant for coverage mapping
+  d_select<-select(d_raw,group_metadata_partnercode,group_metadata_govlist,distrlist,comlist)
+  #write.csv(d_rawi,paste0("data/",d_formlist$id[i],".csv"))
+  write.csv(d_select,paste0("data/",d_formlist$id[i],".csv"))
+  #----------PLAYGROUND BLOCK------------
+  
+  #curl -X GET 'https://kc.humanitarianresponse.info/api/v1/data/22845?query={"kind": "monthly"}'
+  
+  #extract only selected data fields
+  url<-'https://kc.humanitarianresponse.info/api/v1/data/79489.csv' #works
+  d<-kobohr_getdata_csv(url,kobo_user,Kobo_pw)
+  
+  url<-paste0("https://kc.humanitarianresponse.info/api/v1/data/145533.csv?fields=[" , '"Q_M_Q_M1","Q_M_Q_M3"', "]") # does not work
+  rawdata<-GET(url,authenticate(u,pw),progress())
+  d_content_csv <-read_csv(content(rawdata,"raw",encoding = "UTF-8"))
+  
+  
+  ##--------outputs the list of stats for each form--------
+    url<-'https://kc.humanitarianresponse.info/api/v1/stats/submissions/145533?group=a'
+    rawdata<-GET(url,authenticate(u,pw),progress())
+    d_content <- rawToChar(rawdata$content)
+    d_subm_count<- d_content$count
+    
+      ## get the stats for individual form
+      url<-paste0("https://kc.kobotoolbox.org/api/v1/data/145533?fields=[" , '"Q_M_Q_M1","Q_M_Q_M3"', "]") # does not work
+      rawdata<-GET(url,authenticate(u,pw),progress())
+      d_content <- rawToChar(rawdata$content)
+      d_content <- fromJSON(d_content)
+      
+      #-------
+      url= "https://kc.humanitarianresponse.info/api/v1/forms/80978/form.csv"
+      rawdata<-GET(url,authenticate(u,pw),progress())
+      d_content_csv <-read_csv(content(rawdata,"raw",encoding = "UTF-8"))
+      #--export data to CSV - kc.humanitarianresponse.info/api/v1/forms/80978.csv
+      #- kc.humanitarianresponse.info/api/v1/forms/80978.xls export XLSX file
+      
+      
+      
