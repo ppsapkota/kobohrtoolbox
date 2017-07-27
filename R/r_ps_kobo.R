@@ -4,18 +4,26 @@ Developed by: Punya Prasad Sapkota
 Last modified: 11 July 2017
 ----'
 
-#load libraries
-library(httr)
-library(jsonlite)
-library(lubridate)
-library(tidyverse)
-library(stringr)
-library(readxl) #read excel file
-#load file r_kobo_utils.R file first
-options(stringsAsFactors = FALSE)
-#language setting
-Sys.setlocale(category = "LC_ALL",locale = "arabic")
-Sys.setlocale("LC_CTYPE","arabic")
+
+#---------------------FORM DICTIONARY---------------------
+xlsform_name<-"./xlsform/kobo_master_v7.xlsx"
+form_file_name <- xlsform_name
+
+a<-kobo_dico(xlsform_name)
+
+read_excel(xlsform_name)
+
+
+
+
+
+
+#----------------------------------------------------------------------------------------
+
+
+
+
+
 
 #kobo data API
 kobohr <- "https://kc.humanitarianresponse.info/api/v1/data"
@@ -73,6 +81,16 @@ d_formlist_csv<-kobohr_getforms_csv(csv_link,kobo_user,Kobo_pw)
 write_csv(d_formlist_csv,paste0("./data/","formlist_csv.csv"))
 
 
+
+
+
+
+
+
+
+
+
+
 ###-------PLAYGROUND BLOCK-----------
   d_rawi<-kobohr_getdata("https://kc.humanitarianresponse.info/api/v1/data/81471",kobo_user,Kobo_pw)
   #replace "/" in the field header
@@ -113,5 +131,13 @@ write_csv(d_formlist_csv,paste0("./data/","formlist_csv.csv"))
       #--export data to CSV - kc.humanitarianresponse.info/api/v1/forms/80978.csv
       #- kc.humanitarianresponse.info/api/v1/forms/80978.xls export XLSX file
       
+  ##--------extract XLS file-------------
+      url<-'https://kc.humanitarianresponse.info/api/v1/forms.csv'
+      rawdata<-GET(url,authenticate(u,pw),progress())
+      d_content <- rawToChar(rawdata$content)
+      d_content <- fromJSON(d_content)
       
       
+      
+      
+

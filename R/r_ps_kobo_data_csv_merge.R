@@ -12,6 +12,16 @@ Last modified: 12 July 2017
 csv_path<-paste0("./data/data_export_csv_coverage")
 d_merged<- multi_files_merge_csv(csv_path)
 write_csv(d_merged,paste0(csv_path,"/data_merged.csv"))
+
+#--------check neighbourhood pcode for major cities-------
+xlsx_neigh_file<-paste0("./data/neigh_chk_pcode.xlsx")
+d_neigh_comlist<-read_excel(xlsx_neigh_file)
+
+d_merged <- left_join(d_merged,d_neigh_comlist,by=c("Q_M_Q_M4"="admin4Pcode"))
+#filter list with problematic community names
+d_neigh_pcode_missing<-filter(d_merged,admin4Name_en!="")
+write.xlsx2(d_neigh_pcode_missing,paste0(csv_path,"/data_merged_missing_neigh_pcode_list.xlsx"))
+
 #----------count number of submissions by organisations---------
 d_merged_group<- d_merged %>% 
                  group_by(Q_E_Q_E6)
@@ -37,7 +47,7 @@ shpfile_adm3_df<-fortify(shpfile_adm3) #required for polygon shapefile
 
 #join map point shapefile with the count of questionnaire data
 map_com_qcount<-left_join(shpfile_adm4,d_merged_com_qcount,by=c("PCODE" = "Q_M_Q_M4"))
-View(map_com_qcount)
+#View(map_com_qcount)
 #plot map
 map<-ggplot() +
   geom_polygon(data=shpfile_adm3_df,aes(x=long,y=lat,group=group),color="white",fill="gray")+

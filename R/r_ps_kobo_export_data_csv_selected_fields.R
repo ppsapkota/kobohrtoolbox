@@ -9,7 +9,7 @@ Last modified: 18 July 2017
 ##loop through each form and fetch data for individual form and export to CSV
 #read list of forms in the KoBo account - list of forms created with 'kobohr_getforms_csv' function
 #--EXPORT data to individual csv files
-d_formlist_csv <-read_excel("./data/formlist_csv.xlsx",sheet=1)
+d_formlist_csv <-read_excel("./data/syriaregional3_formlist.xlsx",sheet=1)
 #***-----RUN THIS BLOCK------
 #--EXPORT selected fields----------
 #------This is used for coverage mapping purpose only-------
