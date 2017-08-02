@@ -6,18 +6,13 @@ Last modified: 12 July 2017
 #---USAGE
 #-----Exporting data to external CSV file
 #-----Exports data from the multiple forms in the account
-
-
 ----'
-
-
-
 
 #----------
 ##loop through each form and fetch data for individual form and export to CSV
 #read list of forms in the KoBo account - list of forms created with 'kobohr_getforms_csv' function
 #--EXPORT data to individual csv files
-d_formlist_csv <-read_excel("./data/formlist_csv.xlsx",sheet=1)
+d_formlist_csv <-read_excel("./data/syriaregional3_formlist.xlsx",sheet=1)
 for (i in 1:nrow(d_formlist_csv)){
   #i=39
   print(d_formlist_csv$url[i])
@@ -31,10 +26,18 @@ for (i in 1:nrow(d_formlist_csv)){
       d_rawi<-NULL
       #Example "https://kc.humanitarianresponse.info/api/v1/data/79489.csv"
       d_rawi<-kobohr_getdata_csv(d_formlist_csv$url[i],kobo_user,Kobo_pw)
+      
+      #Recode 'n/a' to 'NA'
+       for (kl in 1:ncol(d_rawi)){
+         d_rawi[,kl]<-ifelse(d_rawi[,kl]=="n/a",'NA',d_rawi[,kl])
+       }
       #write to csv
       #save file name
       savefile <- paste0("./data/data_export_csv/",d_formlist_csv$id_string[i],"_", d_formlist_csv$id[i],"_data.csv")
       write_csv(d_rawi,savefile)
+      #save as exlsx
+      savefile_xlsx <- paste0("./data/data_export_csv/",d_formlist_csv$id_string[i],"_", d_formlist_csv$id[i],"_data.xlsx")
+      write.xlsx2(as.data.frame(d_rawi),savefile_xlsx,sheetName = "data",row.names = FALSE)
   }
 }
 

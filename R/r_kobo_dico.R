@@ -53,11 +53,17 @@ kobo_dico <- function(form_file_name) {
       #}
       
       if (survey[i,c("qtype")]=="end_group") {end_flag<-end_flag +1}
+      
+      #for label
+      if (is.na(survey[i,c("label")])) {survey[i,c("label")]<-survey[i,c("name")]}
      
     }
+  
   #manage full header name
   kobo_header_group_list<-list()
+  kobo_header_group_label_list<-list()
   survey$gname<-""
+  survey$gname_label<-""
     for (i in 1:nrow(survey)){
       #get group header level  
       gr_level<-as.numeric(survey[i,c("qlevel")])
@@ -65,21 +71,41 @@ kobo_dico <- function(form_file_name) {
       #pass beging group name to a basket in orger of group level
       if (survey[i,c("qtype")] == "begin_group"){
         kobo_header_group_list[gr_level]<-survey[i,c("name")]
-        survey$gname[i]<-kobo_header_group_list[gr_level] 
+        kobo_header_group_label_list[gr_level]<-survey[i,c("label")]
+        #
+        survey$gname[i]<-kobo_header_group_list[gr_level]
+        survey$gname_label[i]<-kobo_header_group_label_list[gr_level]
       }
       #print(kobo_header_group_list)
       # if not begin_group or end_group
       if ((survey[i,c("qtype")] != "begin_group") && (survey[i,c("qtype")] != "end_group") && (gr_level>0)){
         #make group header
         kobo_header<-str_c(kobo_header_group_list[1:gr_level],sep = "/",collapse = "/")
-        survey$gname[i]<- str_c(kobo_header,survey[i,c("name")],sep="/") 
-        #survey$gname1[i]<-make_group_header(kobo_header_group_list, kobo_header_group_list[gr_level],"/") 
+        survey$gname[i]<- str_c(kobo_header,survey[i,c("name")],sep="/")
+        # with label
+        kobo_header_label<-str_c(kobo_header_group_label_list[1:gr_level],sep = "/",collapse = "/")
+        survey$gname_label[i]<- str_c(kobo_header_label,survey[i,c("label")],sep="/")
       }
   } 
   
   #------------------------------------------------
   cat("Checking now for additional information within your xlsform. Note that you can insert them in the xls and re-run the function! \n \n ")
   
+  if("aggmethod" %in% colnames(survey))
+  {
+    cat("0- Good: You have a column `aggmethod` in your survey worksheet.\n");
+  } else
+  {cat("0- No column `aggmethod` in your survey worksheet. Creating a dummy one for the moment...\n");
+    survey$aggmethod <- ""}
+  
+  if("qrankscore" %in% colnames(survey))
+  {
+    cat("0- Good: You have a column `qrankscore` in your survey worksheet.\n");
+  } else
+  {cat("0- No column `qrankscore` in your survey worksheet. Creating a dummy one for the moment...\n");
+    survey$qrankscore <- ""}
+  
+  #------------------------------------
   if("disaggregation" %in% colnames(survey))
   {
     cat("1- Good: You have a column `disaggregation` in your survey worksheet.\n");
@@ -134,8 +160,8 @@ kobo_dico <- function(form_file_name) {
   
   
   ## Pick only selected columns without names
-  survey <- survey[ ,c("type",   "name" ,  "label", "qtype","listname","qlevel","gname",
-                       "repeatsummarize","variable","disaggregation",  "chapter", "sensitive","anonymise","correlate"
+  survey <- survey[ ,c("type",   "name" ,  "label", "qtype","listname","qlevel","aggmethod","qrankscore", "gname", "gname_label"
+                       #"repeatsummarize","variable","disaggregation",  "chapter", "sensitive","anonymise","correlate"
                        # "indicator","indicatorgroup","indicatortype",
                        # "indicatorlevel","dataexternal","indicatorcalculation","indicatornormalisation"
                        #"indicator","select", "Comment", "indicatordirect", "indicatorgroup" ## This indicator reference
@@ -146,25 +172,44 @@ kobo_dico <- function(form_file_name) {
                        # "repeat_count"
   )]
   
-  write.xlsx2(as.data.frame(survey),gsub(".xlsx","_agg_method.xlsx",form_file_name),sheetName = "agg_method", row.names=FALSE, na = "")
+  write.xlsx2(as.data.frame(survey),gsub(".xlsx","_agg_method.xlsx",form_file_name),sheetName = "survey", row.names=FALSE, na = "")
   
   #survey <- as.data.frame(survey[!is.na(survey$type), ])
   choices <- read_excel(form_tmp, sheet = "choices")
   ## Rename the variable label
   #names(survey)[names(survey)=="label::English"] <- "label"
   choices<- rename(choices,"listnamechoice"="list name","namechoice"="name","labelchoice"="label::English")
+  
+  choices_survey<-full_join(choices,survey,by=c("listnamechoice"="listname"))
+  
+  #ADDITIONAL CLEAN UP AND PREPARATION
+  #create full group/name for select multiple
+  choices_survey$gname_full<-""
+  choices_survey$gname_full<-ifelse(choices_survey$qtype=="select_multiple",paste0(choices_survey$gname,"/",choices_survey$namechoice),choices_survey$gname)
+  #for label
+  #
+  choices_survey$labelchoice_clean<-choices_survey$labelchoice
+  choices_survey$labelchoice_clean<-str_replace_all(choices_survey$labelchoice_clean,c('\\.'='_','\\*'='','\\:'='','/'='','\\?'=''))
+  #
+  choices_survey$gname_full_mlabel<-""
+  choices_survey$gname_full_mlabel<-ifelse(choices_survey$qtype=="select_multiple",paste0(choices_survey$gname,"/",choices_survey$labelchoice_clean),choices_survey$gname)
+  #
+  ##header names with group label
+  choices_survey$gname_full_label<-""
+  choices_survey$gname_full_label<-ifelse(choices_survey$qtype=="select_multiple",paste0(choices_survey$gname_label,"/",choices_survey$labelchoice_clean),choices_survey$gname_label)
+  
+  
+  #extra fields
   ### We can now extract the id of the list name to reconstruct the full label fo rthe question
-  cat(" \n Now extracting list name from questions type.\n \n")
-  if("recategorise" %in% colnames(choices))
-  {
-    cat("8 -  Good: You have a column `recategorise` in your `choices` worksheet.\n");
-  } else
-  {cat("8 -  No column `recategorise` in your `choices` worksheet. Creating a dummy one for the moment...\n");
-    choices$recategorise <- ""}
+  # cat(" \n Now extracting list name from questions type.\n \n")
+  # if("recategorise" %in% colnames(choices))
+  # {
+  #   cat("8 -  Good: You have a column `recategorise` in your `choices` worksheet.\n");
+  # } else
+  # {cat("8 -  No column `recategorise` in your `choices` worksheet. Creating a dummy one for the moment...\n");
+  #   choices$recategorise <- ""}
   
-  choices_survey<-left_join(choices,survey,by=c("listnamechoice"="listname"))
   write.xlsx2(as.data.frame(choices_survey),gsub(".xlsx","_agg_method.xlsx",form_file_name), sheetName="choices", row.names=FALSE, na = "", append = TRUE)
-  
 } #closed by Punya
 NULL
 
