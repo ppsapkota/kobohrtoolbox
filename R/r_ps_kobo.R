@@ -34,14 +34,36 @@ kobo_dico(xlsform_name)
       # data_label<-kobo_encode(data,dico)
       
       #recode all the files in the folder
-      csv_path<-"./data/data_export_csv/"
+      csv_path<-"./data/data_final/"
       listfiles<-list.files(csv_path,".csv")
       
       for (i in 1:length(listfiles)){
         fname<-listfiles[i]
         data<-read.csv(paste0(csv_path,fname),na="n/a",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)
-        # data<-apply(data,2,as.character)
-        # data<-data.frame(data,stringsAsFactors = FALSE,check.names = FALSE)
+        #--do not include admin columns in recoding
+        #rename fields
+        #"Q_M/Q_M1"                                                                             
+        #"Q_M/Q_M2"                                                                             
+        #"Q_M/Q_M3"                                                                             
+        #"Q_M/Q_M4"                                                                             
+        #"Q_M/Q_M5"         #
+        #data<-rename(data,"admin1pcode"="Q_M/Q_M1","admin2pcode"="Q_M/Q_M2","admin3pcode"="Q_M/Q_M3","admin4pcode"="Q_M/Q_M4","neighpcode"="Q_M/Q_M5")
+        admin1pcode <-data[,c("Q_M/Q_M1")]
+        admin2pcode <-data[,c("Q_M/Q_M2")]
+        admin3pcode <-data[,c("Q_M/Q_M3")]
+        admin4pcode <-data[,c("Q_M/Q_M4")]
+        neighpcode <-data[,c("Q_M/Q_M5")]
+        #
+        #
+        #
+        data<-cbind(
+              admin1pcode,
+              admin2pcode,
+              admin3pcode,
+              admin4pcode,
+              neighpcode,
+              data
+              )
         print(paste0("Start Encoding file - ", fname, ' - Start time =', Sys.time()))
         data_label<-kobo_encode(data,dico)
         print(paste0("Finished Encoding file - ", fname, ' - End time =', Sys.time()))
@@ -51,20 +73,179 @@ kobo_dico(xlsform_name)
 #3-----------------MERGE ALL FILES IN THE FOLDER-----------------------------------------------------------------------
       csv_path<-"./data/data_export_csv/"
       merged_files<-multi_files_merge_csv(csv_path)
-      write.xlsx2(merged_files,paste0(csv_path,"_hno_kobo_raw_merged.xlsx"), row.names = FALSE)
-
-
+      write.xlsx2(merged_files,paste0(csv_path,"multisector_assessment_raw_data_all.xlsx"), row.names = FALSE)
+      
 #4-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
-
+##-----data preparation---------
+      data_fname<-"./data/data_final/multisector_assessment_raw_data_all_recode.xlsx"
+      data<-read_excel(data_fname,col_types ="text",na='NA')
+      #data<-read.csv(data_fname,na="NA",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)
+      data<-as.data.frame(data)
+      #read data file to recode
+      nameodk<-"./xlsform/kobo_master_v7_agg_method.xlsx"
+      #read ODK file choices and survey sheet
+      survey<-read_excel(nameodk,sheet = "survey",col_types = "text")  
+      dico<-read_excel(nameodk,sheet="choices",col_types ="text")
       
+      #Some clean up label
+      ind<-which(names(dico)=="label")
+      dico[,ind]<-str_replace_all(dico[,ind],c('\\.'='_','\\*'='','\\:'='','/'=' ','\\?'=''))
+  ##---------confidence level calculation---------
+      #confidence level calculation
+      #-InterSector
+        dc_method<-as.data.frame(data[,c("Q_1/Q_K1/Q_K1_C","Q_1/Q_K2_1/Q_K2_C","Q_1/Q_K3_1/Q_K3_C")])
+        dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
+        dc_method<-cbind(dc_method,dc_method_score=rowMeans(dc_method[,1:3],na.rm =TRUE))
+        #
+        ki_type<-as.data.frame(data[,c("Q_1/Q_K1/Q_K1_D","Q_1/Q_K2_1/Q_K2_D","Q_1/Q_K3_1/Q_K3_D")])
+        ki_type<-assign_metadata_score_bylabel(ki_type,dico)
+        ki_type<-sapply(ki_type,as.numeric)
+        ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
+        
+        is_cf_level<-dc_method[,4]+ki_type[,4]
+      #-CCCM
+        dc_method<-as.data.frame(data[,c("Q_2/Q_2k_1/Q_2k_1_c","Q_2/Q_2k_2/Q_2k_2_c","Q_2/Q_2k_3/Q_2k_3_c")])
+        dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
+        dc_method<-cbind(dc_method,dc_method_score=rowMeans(dc_method[,1:3],na.rm =TRUE))
+        #-
+        ki_type<-as.data.frame(data[,c("Q_2/Q_2k_1/Q_2k_1_d","Q_2/Q_2k_2/Q_2k_2_d","Q_2/Q_2k_3/Q_2k_3_d")])
+        ki_type<-assign_metadata_score_bylabel(ki_type,dico)
+        ki_type<-sapply(ki_type,as.numeric)
+        ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
+        
+        cccm_cf_level<-dc_method[,4]+ki_type[,4]
       
+      #-Education
+        dc_method<-as.data.frame(data[,c("Q_3/Q_3k_1/Q_3k_1_c","Q_3/Q_3k_2/Q_3k_2_c","Q_3/Q_3k_2/Q_3k_3/Q_3k_3_c")])
+        dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
+        dc_method<-cbind(dc_method,dc_method_score=rowMeans(dc_method[,1:3],na.rm =TRUE))
+        #-
+        ki_type<-as.data.frame(data[,c("Q_3/Q_3k_1/Q_3k_1_d","Q_3/Q_3k_2/Q_3k_2_d","Q_3/Q_3k_2/Q_3k_3/Q_3k_3_d")])
+        ki_type<-assign_metadata_score_bylabel(ki_type,dico)
+        ki_type<-sapply(ki_type,as.numeric)
+        ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
+        
+        edu_cf_level<-dc_method[,4]+ki_type[,4]
+        
+      #-FSS
+        dc_method<-as.data.frame(data[,c("Q_4/Q_4k_1/Q_4k_1_c","Q_4/Q_4k_2/Q_4k_2_c","Q_4/Q_4k_3/Q_4k_3_c")])
+        dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
+        dc_method<-cbind(dc_method,dc_method_score=rowMeans(dc_method[,1:3],na.rm =TRUE))
+        #-
+        ki_type<-as.data.frame(data[,c("Q_4/Q_4k_1/Q_4k_1_d","Q_4/Q_4k_2/Q_4k_2_d","Q_4/Q_4k_3/Q_4k_3_d")])
+        ki_type<-assign_metadata_score_bylabel(ki_type,dico)
+        ki_type<-sapply(ki_type,as.numeric)
+        ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
+        
+        fss_cf_level<-dc_method[,4]+ki_type[,4]
       
+      #-Health
+        dc_method<-as.data.frame(data[,c("Q_5/Q_5k_1/Q_5k_1_c","Q_5/Q_5k_2/Q_5k_2_c","Q_5/Q_5k_3/Q_5k_3_c")])
+        dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
+        dc_method<-cbind(dc_method,dc_method_score=rowMeans(dc_method[,1:3],na.rm =TRUE))
+        #-
+        ki_type<-as.data.frame(data[,c("Q_5/Q_5k_1/Q_5k_1_d","Q_5/Q_5k_2/Q_5k_2_d","Q_5/Q_5k_3/Q_5k_3_d")])
+        ki_type<-assign_metadata_score_bylabel(ki_type,dico)
+        ki_type<-sapply(ki_type,as.numeric)
+        ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
+        
+        health_cf_level<-dc_method[,4]+ki_type[,4]
       
+      #-NFI-Shelter
+        dc_method<-as.data.frame(data[,c("Q_6/Q_6k_1/Q_6_group_1/Q_6_group_2/Q_6k_1_c","Q_6/Q_6k_1/Q_6_group_4/Q_6_group_5/Q_6k_2_c","Q_6/Q_6k_1/Q_6_group_7/Q_6_group_8/Q_6k_3_c")])
+        dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
+        dc_method<-cbind(dc_method,dc_method_score=rowMeans(dc_method[,1:3],na.rm =TRUE))
+        #-
+        ki_type<-as.data.frame(data[,c("Q_6/Q_6k_1/Q_6_group_1/Q_6_group_2/Q_6k_1_d","Q_6/Q_6k_1/Q_6_group_4/Q_6_group_5/Q_6k_2_d","Q_6/Q_6k_1/Q_6_group_7/Q_6_group_8/Q_6k_3_d")])
+        ki_type<-assign_metadata_score_bylabel(ki_type,dico)
+        ki_type<-sapply(ki_type,as.numeric)
+        ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
+        
+        nfishelter_cf_level<-dc_method[,4]+ki_type[,4]
       
+      #Protection
+        dc_method<-as.data.frame(data[,c("Q_7/Q_7k_1/Q_7k_1_c","Q_7/Q_7k_2/Q_7k_2_c","Q_7/Q_7k_3/Q_7k_3_c")])
+        dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
+        dc_method<-cbind(dc_method,dc_method_score=rowMeans(dc_method[,1:3],na.rm =TRUE))
+        #-
+        ki_type<-as.data.frame(data[,c("Q_7/Q_7k_1/Q_7k_1_d","Q_7/Q_7k_2/Q_7k_2_d","Q_7/Q_7k_3/Q_7k_3_d")])
+        ki_type<-assign_metadata_score_bylabel(ki_type,dico)
+        ki_type<-sapply(ki_type,as.numeric)
+        ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
+        
+        prot_cf_level<-dc_method[,4]+ki_type[,4]
       
+      #ERL
+        dc_method<-as.data.frame(data[,c("Q_8/Q_8k_1/Q_8k_1_c","Q_8/Q_8k_2_1/Q_8k_2_c","Q_8/Q_8k_2_1/Q_8k_3_1/Q_8k_3_c")])
+        dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
+        dc_method<-cbind(dc_method,dc_method_score=rowMeans(dc_method[,1:3],na.rm =TRUE))
+        #-
+        ki_type<-as.data.frame(data[,c("Q_8/Q_8k_1/Q_8k_1_d","Q_8/Q_8k_2_1/Q_8k_2_d","Q_8/Q_8k_2_1/Q_8k_3_1/Q_8k_3_d")])
+        ki_type<-assign_metadata_score_bylabel(ki_type,dico)
+        ki_type<-sapply(ki_type,as.numeric)
+        ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
+        
+        erl_cf_level<-dc_method[,4]+ki_type[,4]
       
+      #Geographic level for aggregation
+      agg_pcode<-ifelse(is.na(data[,c("Q_M/Q_M5")]),data[,c("admin4pcode")],data[,c("neighpcode")])
+      data_level<-ifelse(is.na(data[,c("Q_M/Q_M5")]),"Community","Neighbourhood")
+        
+      data<-cbind(
+        is_cf_level,
+        cccm_cf_level,
+        edu_cf_level,
+        fss_cf_level,
+        health_cf_level,
+        nfishelter_cf_level,
+        prot_cf_level,
+        erl_cf_level,
+        data_level,
+        agg_pcode,
+        data
+      )
+      write_csv(data,gsub(".xlsx","_CL.csv",data_fname),na='NA')
 #--------------------------------------------------------------------------------------------------------
 
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
 #kobo data API
 kobohr <- "https://kc.humanitarianresponse.info/api/v1/data"
 #kobohr_forms <- "https://kc.kobotoolbox.org/api/v1/formlist"
@@ -150,6 +331,14 @@ write_csv(d_formlist_csv,paste0("./data/","formlist_csv.csv"))
   url<-paste0("https://kc.humanitarianresponse.info/api/v1/data/145533.csv?fields=[" , '"Q_M_Q_M1","Q_M_Q_M3"', "]") # does not work
   rawdata<-GET(url,authenticate(u,pw),progress())
   d_content_csv <-read_csv(content(rawdata,"raw",encoding = "UTF-8"))
+  
+  #try XLSX download
+  url<-"https://kc.humanitarianresponse.info/api/v1/data/145533.xlsx" # does not work
+  rawdata<-GET(url,authenticate(u,pw),progress())
+  d_content_csv <-read_excel(content(rawdata,"raw",encoding = "UTF-8"))
+  write.xlsx2(rawdata,"a.xlsx")
+  
+  
   
   
   ##--------outputs the list of stats for each form--------
