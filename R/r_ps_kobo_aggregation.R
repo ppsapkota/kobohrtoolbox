@@ -1,7 +1,7 @@
 '----
 Developed by: Punya Prasad Sapkota
 Reference: Tool developed by Olivier/REACH
-Last modified: 5 Aug 2017
+Last modified: 6 Aug 2017
 ----'
 
 #4-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
@@ -31,6 +31,10 @@ Last modified: 5 Aug 2017
       # for (kl in 1:ncol(data)){
       #   data[,kl]<-ifelse(data[,kl]=="NULL",NA,data[,kl])
       # }
+  ##---------SPLIT FOR RANK QUESTIONS------------
+      data<-split_select_one_rank(data,dico)
+      
+      
   ##---------confidence level calculation---------
       #confidence level calculation
       #-InterSector
@@ -147,10 +151,19 @@ Last modified: 5 Aug 2017
       )
       write_csv(data,gsub(".xlsx","_CL.csv",data_fname),na='NA')
 #-----------Get the unique locations for AGGREGATION FRAME----------------------------------------
+    
+    #data
+    db<-data
+    db_heading<-names(db)  
     agg_geo_colname<-"agg_pcode"
-    agg_geo_level<-distinct(as.data.frame(data[,"agg_pcode"]))  
+    
+    agg_geo_level<-distinct(as.data.frame(db[,"agg_pcode"]))  
     names(agg_geo_level)[1] <- "agg_pcode"
     db_agg<-agg_geo_level  
+    #ODK forms
+    agg_method_all<-survey
+    choices<-dico
+    
     #add number of records per agg_geo_level
     d<-db %>% 
       group_by_(agg_geo_colname) %>% 
@@ -161,14 +174,6 @@ Last modified: 5 Aug 2017
     print(paste0("\nAggregate data - Start: ",Sys.time()))  
     
     
-    
-    
-    
-    #ODK forms
-    agg_method_all<-survey
-    #data
-    db<-data
-    db_heading<-names(db)
     #Loop through each column of the main data
       #-identify question and aggregation type    
     j<-1 #exclude the first agg_pcode column

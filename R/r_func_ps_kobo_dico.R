@@ -161,6 +161,9 @@ kobo_dico <- function(form_file_name) {
   {cat("5- No column `variable` in your survey worksheet. Creating a dummy one for the moment...\n");
     survey$variable <- ""}
   
+  #qraqnkgroup
+    survey$qrankgroup<-ifelse(survey$aggmethod=="RANK3"|survey$aggmethod=="RANK4",str_sub(survey$gname,1,str_length(survey$gname)-2),survey$qrankgroup)
+  
   
   ## Pick only selected columns without names
   survey <- survey[ ,c("type",   "name" ,  "label", "qtype","listname","qlevel","aggmethod","qrankscore","qrankgroup","sector", "gname", "gname_label"
