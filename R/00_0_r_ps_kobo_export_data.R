@@ -1,7 +1,7 @@
 '----
 ***********************************
 Developed by: Punya Prasad Sapkota
-Last modified: 12 July 2017
+Last modified: 8 August 2017
 ***********************************
 #---USAGE
 #-----Exporting data to external CSV file
@@ -26,10 +26,13 @@ for (i in 1:nrow(d_formlist_csv)){
       d_rawi<-NULL
       #Example "https://kc.humanitarianresponse.info/api/v1/data/79489.csv"
       d_rawi<-kobohr_getdata_csv(d_formlist_csv$url[i],kobo_user,Kobo_pw)
+      d_rawi<-as.data.frame(d_rawi)
+      d_rawi<-sapply(d_rawi,as.character)
+      d_rawi<-data.frame(d_rawi,stringsAsFactors=FALSE,check.names=FALSE)
       
       #Recode 'n/a' to 'NA'
        for (kl in 1:ncol(d_rawi)){
-         d_rawi[,kl]<-ifelse(d_rawi[,kl]=="n/a",'NA',d_rawi[,kl])
+         d_rawi[,kl]<-ifelse(d_rawi[,kl]=="n/a",NA,d_rawi[,kl])
        }
       #write to csv
       #save file name

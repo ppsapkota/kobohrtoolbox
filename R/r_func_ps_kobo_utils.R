@@ -23,7 +23,7 @@ kobohr_getforms_csv <-function(url,u,pw){
 #url<-https://kc.humanitarianresponse.info/api/v1/data/145448.csv
 kobohr_getdata_csv<-function(url,u,pw){
   #supply url for the data
-  rawdata<-GET(url,authenticate(u,pw),progress(),timeout(25))
+  rawdata<-GET(url,authenticate(u,pw),progress())
   cat("\n")
   d_content <- read_csv(content(rawdata,"raw",encoding = "UTF-8"))
 }

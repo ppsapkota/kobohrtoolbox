@@ -24,7 +24,7 @@ assign_metadata_score_bylabel <- function(data1, dico1) {
       #i_lt=2
       data_rec[,col_ind]<-ifelse(data_rec[,col_ind]==lookup_table$labelchoice[i_lt],lookup_table[["vscore"]][i_lt],data_rec[,col_ind])
     }
-  }#finish recoding of select_one
+  }#finish recoding of select_one metadata
   return(data_rec)
 }
 NULL

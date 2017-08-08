@@ -15,11 +15,7 @@ Last modified: 6 Aug 2017
       #read ODK file choices and survey sheet
       survey<-read_excel(nameodk,sheet = "survey",col_types = "text")  
       dico<-read_excel(nameodk,sheet="choices",col_types ="text")
-      
-      #Some clean up label
-      ind<-which(names(dico)=="label")
-      dico[,ind]<-str_replace_all(dico[,ind],c('\\.'='_','\\*'='','\\:'='','/'='_','\\?'=''))
-      
+     
       #--key
       key<-row.names(data)
       data<-cbind(key, data)
@@ -31,8 +27,10 @@ Last modified: 6 Aug 2017
       # for (kl in 1:ncol(data)){
       #   data[,kl]<-ifelse(data[,kl]=="NULL",NA,data[,kl])
       # }
-  ##---------SPLIT FOR RANK QUESTIONS------------
+###############--------SPLIT RANK SELECT ONE TO MULTIPLE------------###################
       data<-split_select_one_rank(data,dico)
+      write_csv(data,gsub(".xlsx","_SPLIT_RANK_step01.csv",data_fname),na='NA')
+###############------------------------------------------------------###################      
       
       
   ##---------confidence level calculation---------
@@ -149,7 +147,7 @@ Last modified: 6 Aug 2017
         data_level,
         data
       )
-      write_csv(data,gsub(".xlsx","_CL.csv",data_fname),na='NA')
+      write_csv(data,gsub(".xlsx","_CL_Step02.csv",data_fname),na='NA')
 #-----------Get the unique locations for AGGREGATION FRAME----------------------------------------
     
     #data
@@ -161,17 +159,36 @@ Last modified: 6 Aug 2017
     names(agg_geo_level)[1] <- "agg_pcode"
     db_agg<-agg_geo_level  
     #ODK forms
-    agg_method_all<-survey
+    agg_method_all<-as.data.frame(filter(survey, type!="begin_group", type!="note",type!="end_group"))
     choices<-dico
     
+    ###############--------ORDINAL TO SCORE------------###################
+    
+    db<-assign_ordinal_score_bylabel(db,choices)
+    write_csv(db,gsub(".xlsx","_ORD_RECODING_Step03.csv",data_fname),na='NA')
+    
+    ###############------------------------------------###################
     #add number of records per agg_geo_level
-    d<-db %>% 
+    d_nr<-db %>% 
       group_by_(agg_geo_colname) %>% 
       summarise(num_record=n()) %>% 
       ungroup()
-      
-    db_agg<-left_join(db_agg,d,by=agg_geo_colname)
-    print(paste0("\nAggregate data - Start: ",Sys.time()))  
+    
+    db<-left_join(db,d_nr,by=agg_geo_colname) 
+    write_csv(db,gsub(".xlsx","_COUNT_DUPLICATE_Step04.csv",data_fname),na='NA')
+    
+#********A step can be incorporated here******************
+      #separate db_dupl with duplicate records
+      #separate db_no_dupl
+      #db<-db_dupl and run the aggregation process for communities where more than one records are submitted
+      #merge data (db_agg and db_no_dupl) in later stage
+    
+    
+    #Prepare aggregation frame
+    db_agg<-left_join(db_agg,d_nr,by=agg_geo_colname)
+    print(paste0("Aggregate data - Start: ",Sys.time()))  
+    
+    write_csv(db_agg,gsub(".xlsx","_AGG_FRAME_Step00.csv",data_fname),na='NA')
     
     
     #Loop through each column of the main data
@@ -179,6 +196,7 @@ Last modified: 6 Aug 2017
     j<-1 #exclude the first agg_pcode column
     
     while(j<ncol(db))
+    #while(j<1742)
     {
       j<-j+1
       #j=21 for testing
@@ -189,6 +207,28 @@ Last modified: 6 Aug 2017
       agg_heading<-db_heading[j]
       #check<-strsplit(agg_heading,split="/")[1] #for now don't split - check full
       check<-agg_heading
+      
+      #if ranking prepare check names
+      if (str_detect(agg_heading,"/RANK3_SCORE") | str_detect(agg_heading,"/RANK4_SCORE")){
+        #gather group name
+        t_p<-str_locate(agg_heading,"/RANK")
+        t_str<-substr(agg_heading,1,t_p-1)
+        i_str<-which(agg_method_all$qrankgroup %in% t_str)
+        #should detect more than one 
+        check<-agg_method_all$gname[i_str][1]
+      }
+      
+      #check if question is multiple select
+      split_heading<-strsplit(agg_heading,split="/")[[1]] 
+      i_str<-which(agg_method_all$name %in% split_heading)
+      if(length(i_str)>0){
+        if (agg_method_all$aggmethod[i_str][1]=="SEL_ALL"|
+            agg_method_all$aggmethod[i_str][1]=="SEL_3" |
+            agg_method_all$aggmethod[i_str][1]=="SEL_4"){
+            check<-agg_method_all$gname[i_str][1]
+          }
+      }
+      
       ### find out the heading in the agg_method table
       indexagg<-which(agg_method_all$gname%in%check)
       if(length(indexagg)==0){
@@ -198,6 +238,8 @@ Last modified: 6 Aug 2017
         }else{
           sector<-agg_method_all$sector[indexagg]
           i_aggmethod<-agg_method_all$aggmethod[indexagg]
+          i_qrankgroup<-agg_method_all$qrankgroup[indexagg]
+          i_gname<-agg_method_all$gname[indexagg]
         }
       
       if(length(sector)==0 | is.na(sector)){sector<-"NA"}
@@ -227,13 +269,14 @@ Last modified: 6 Aug 2017
       #if SCORE - that is for metadata mainly - return cancatenated results
       if (i_aggmethod=="SCORE"){i_aggmethod<-"CONCAT_U"} #could be changed to average later/before running recoding is required
       
+      #check for RANK
+      
       #aggregation method for geographic level
-      if (agg_heading=="agg_pcode"){
+      if (agg_heading=="agg_pcode" | agg_heading=="num_record"){
         i_aggmethod<-"DONOTHING"
       }
       
-      
-      print(paste0("Running - ",agg_heading))
+      print(paste0("Running - ",agg_heading, " Column:",j))
       
       #Confidence level column
        if (sector=="intersector"){
@@ -254,18 +297,15 @@ Last modified: 6 Aug 2017
         cf_level<-cf_level_erl
        }else {cf_level<-rep(1,nrow(db))} 
       
-      
       #-------to do---------
-          #SEL_1
-          #ORD_1
-          #RANK3
+          #RANK3 - one more step remaining
+          #SEL_ALL
+          #SEL_1 - one more thing remaining no answer and answer
       #---------------------
-      
-      
       
       #NOW - THE AGGREGATION STARTS
         #Average (Confidence Level Weighted)
-          if (i_aggmethod=="AVG_W"){
+          if (i_aggmethod=="AVG_W"|i_aggmethod=="ORD_1"){
             d<-"a"
             vn_agg<-db_heading[j]
             #prepare confidence level
@@ -300,7 +340,7 @@ Last modified: 6 Aug 2017
             #join to the expanding aggregation data
             db_agg<-left_join(db_agg,d,by=agg_geo_colname)
             rm(list=c("ldt","d","i_heading","vn_agg"))
-          
+              
         #Concatenate responses  
           }else if (i_aggmethod=="CONCAT"){    
             d<-"a"
@@ -346,7 +386,104 @@ Last modified: 6 Aug 2017
             names(d)<-i_heading
             db_agg<-left_join(db_agg,d,by=agg_geo_colname)
             rm(list=c("ldt","d","i_heading","vn_agg"))
+           
+        #RANK questions - RANK3/RANK4
+          }else if (i_aggmethod=="RANK3" | i_aggmethod=="RANK4"){
+            d<-"a"
+            vn_agg<-names(db)[j]
+            #find rank group
+            vn_qrankgroup<-paste0(i_qrankgroup,"/",i_aggmethod,"_SCORE")
             
+              if(str_detect(vn_agg,vn_qrankgroup)){
+               #heading with Rank score 
+                  #prepare confidence level
+                  i_cf_level<-conv_num(cf_level)
+                  ldt<-na.omit(data.frame(db[,which(names(db)==agg_geo_colname)],i_cf_level,conv_num(db[,j])))
+                  ldt$result<-apply(ldt[,2:3], 1, prod)
+                  d<-tapply(ldt$result,ldt[,1],sum)
+                  d<-data.frame(row.names(d),d)
+                  d<-as.data.frame(d)	
+              } else{
+                  ldt<- data.frame(db_agg[,which(names(db_agg)==agg_geo_colname)],rep(NA,nrow(db_agg)))  
+                  d<-as.data.frame(ldt)
+              }
+            
+            i_heading<-c("agg_pcode",vn_agg)
+            #check if d does not have rows i.e all NA so omitted in previous step, then create empty data frame
+            if(nrow(d)==0){d<-data.frame(x="temp",y=NA)}
+            #
+            names(d)<-i_heading
+            #join to the expanding aggregation data
+            db_agg<-left_join(db_agg,d,by="agg_pcode")
+            rm(list=c("ldt","d","i_heading","vn_agg"))
+        
+        #SELECT ONE
+          }else if(i_aggmethod=="SEL_1"){
+
+            d<-"a"
+            vn_agg<-names(db)[j]
+            i_cf_level<-conv_num(cf_level)
+            ldt<- na.omit(data.frame(db[,which(names(db)==agg_geo_colname)],db[,j],i_cf_level))
+
+            i_heading<-c(agg_geo_colname,vn_agg,"cf_level")
+            if(nrow(ldt)==0){ldt<-data.frame(x="temp",y=NA,z=NA)}
+            names(ldt)<-i_heading
+
+            #write.csv(ldt,"./data/data_final/sel1_rank00_ldt.csv")
+
+            ldt<-ldt %>% group_by_(agg_geo_colname,as.name(vn_agg))%>%
+                       summarise(cf_level=sum(cf_level,na.rm=TRUE)) %>%
+                        ungroup()
+
+            # d<-ldt %>% group_by_(agg_geo_colname)%>%
+            #   mutate(rank=rank(-cf_level,ties.method = 'min')) %>%
+            #   ungroup()
+            #for checking
+            #ldt$cf_level<-ifelse(ldt$agg_pcode=="C4278",10,ldt$cf_level)
+            
+            ldt<-as.data.table(ldt)
+            d<-ldt[,rank:=rank(-cf_level,ties.method = 'min'), by = agg_pcode]
+            #now select rank 1 only
+            d<-as.data.table(filter(d,rank==1))
+            d[,n_samerank := .N, by = agg_pcode]
+            #change to no_consensus if two rows are ranked same
+            d[d$n_samerank > 1,2]<-"No_Consensus"
+            #Get UNIQUE here
+            d<-unique(d[,1:2])
+            db_agg<-left_join(db_agg,d,by=agg_geo_colname)
+            rm(list=c("ldt","d","i_heading","vn_agg"))
+
+            write_csv(db_agg,paste0(j,".csv"),na='NA')
+            
+        #SELECT multiple
+          }else if (i_aggmethod=="SEL_ALL" | i_aggmethod=="SEL_3" | i_aggmethod=="SEL_4"){
+            d<-"a"
+            vn_agg<-names(db)[j]
+            #find rank group
+            vn_gname<-paste0(i_gname,"/")
+            if(str_detect(vn_agg,vn_gname)){
+              #prepare confidence level
+              i_cf_level<-conv_num(cf_level)
+              ldt<-na.omit(data.frame(db[,which(names(db)==agg_geo_colname)],i_cf_level,conv_num(db[,j])))
+              ldt$result<-apply(ldt[,2:3], 1, prod)
+              d<-tapply(ldt$result,ldt[,1],sum)
+              d<-data.frame(row.names(d),d)
+              d<-as.data.frame(d)	
+            } else{
+              ldt<- data.frame(db_agg[,which(names(db_agg)==agg_geo_colname)],rep(NA,nrow(db_agg)))  
+              d<-as.data.frame(ldt)
+            }
+            
+            i_heading<-c("agg_pcode",vn_agg)
+            #check if d does not have rows i.e all NA so omitted in previous step, then create empty data frame
+            if(nrow(d)==0){d<-data.frame(x="temp",y=NA)}
+            #
+            names(d)<-i_heading
+            #join to the expanding aggregation data
+            db_agg<-left_join(db_agg,d,by="agg_pcode")
+            rm(list=c("ldt","d","i_heading","vn_agg"))
+            
+                
         #NO Aggregation method defined - simply return NA  
           }else if(i_aggmethod=="NA"){
             d<-"a"
@@ -375,13 +512,27 @@ Last modified: 6 Aug 2017
             db_agg<-left_join(db_agg,d,by="agg_pcode")
             rm(list=c("d","i_heading","vn_agg"))
           }
+      
+      print(paste0(nrow(db_agg),"---",j))
+      
+      
     }#while
-    
    
+      write_csv(db_agg,gsub(".xlsx","_AGG_withScore_Step01.csv",data_fname),na='NA')  
+
+      db_agg<-sapply(db_agg,as.character)
+      db_agg<-data.frame(db_agg,stringsAsFactors=FALSE,check.names=FALSE)    
+    
+###############--------ORDINAL SCORE TO VARIABLE NAME------------###################
+    db_agg<-assign_ordinal_label_byscore(db_agg,choices)
+    write_csv(db_agg,gsub(".xlsx","_AGG_ORD_LABEL_Step02.csv",data_fname),na='NA')
+    
+###############--------------------------------------------------###################
     
     
     
-    write_csv(db_agg,gsub(".xlsx","_AGG_FINAL.csv",data_fname),na='NA')
+    
+write_csv(db_agg,gsub(".xlsx","_AGG_FINAL.csv",data_fname),na='NA')
       
       
       

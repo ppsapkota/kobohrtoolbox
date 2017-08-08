@@ -196,7 +196,8 @@ kobo_dico <- function(form_file_name) {
   #for label
   #
   choices_survey$labelchoice_clean<-choices_survey$labelchoice
-  choices_survey$labelchoice_clean<-str_replace_all(choices_survey$labelchoice_clean,c('\\.'='_','\\*'='','\\:'='','\\?'='','/'='_'))
+  #choices_survey$labelchoice_clean<-str_replace_all(choices_survey$labelchoice_clean,c('\\.'='_','\\*'='','\\:'='','\\?'='','/'='_'))
+  choices_survey$labelchoice_clean<-str_replace_all(choices_survey$labelchoice_clean,c('/'='_'))
   #
   choices_survey$gname_full_mlabel<-""
   choices_survey$gname_full_mlabel<-ifelse(choices_survey$qtype=="select_multiple",paste0(choices_survey$gname,"/",choices_survey$labelchoice_clean),choices_survey$gname)
