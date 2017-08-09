@@ -37,11 +37,11 @@ for (i in 1:nrow(d_formlist_csv)){
       #write to csv
       #save file name
       savefile <- paste0("./data/data_export_csv/",d_formlist_csv$id_string[i],"_", d_formlist_csv$id[i],"_data.csv")
-      #write_csv(d_rawi,savefile)
+      write_csv(d_rawi,savefile)
       
       #save as exlsx
-      savefile_xlsx <- paste0("./data/data_export_csv/",d_formlist_csv$id_string[i],"_", d_formlist_csv$id[i],"_data.xlsx")
-      write.xlsx2(as.data.frame(d_rawi),savefile_xlsx,sheetName = "data",row.names = FALSE)
+      #savefile_xlsx <- paste0("./data/data_export_csv/",d_formlist_csv$id_string[i],"_", d_formlist_csv$id[i],"_data.xlsx")
+      #write.xlsx2(as.data.frame(d_rawi),savefile_xlsx,sheetName = "data",row.names = FALSE)
   }
 }
 

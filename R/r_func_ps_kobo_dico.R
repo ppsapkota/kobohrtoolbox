@@ -162,7 +162,7 @@ kobo_dico <- function(form_file_name) {
     survey$variable <- ""}
   
   #qraqnkgroup
-    survey$qrankgroup<-ifelse(survey$aggmethod=="RANK3"|survey$aggmethod=="RANK4",str_sub(survey$gname,1,str_length(survey$gname)-2),survey$qrankgroup)
+  #survey$qrankgroup<-ifelse(survey$aggmethod=="RANK3"|survey$aggmethod=="RANK4",str_sub(survey$gname,1,str_length(survey$gname)-2),survey$qrankgroup)
   
   
   ## Pick only selected columns without names

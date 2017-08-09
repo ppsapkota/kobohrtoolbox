@@ -4,7 +4,7 @@ split select one into multiple columns for each variable
 '
 
 split_select_one_rank<-function(db,choices){
-  print(paste0("Split select_one questions for Ranking questions: ", Sys.time()))
+  print(paste0("Split select_one questions for Ranking: ", Sys.time()))
   #variable initialization
   vn<-"0"
   vn_group<-"0"
@@ -59,7 +59,7 @@ split_select_one_rank<-function(db,choices){
     }
   }
   write_csv(db_rec,gsub(".xlsx","_RANK_SPLIT_CHECKS.csv",data_fname),na='NA')
-  print(paste0("Split select_one questions for Ranking questions: DONE", Sys.time()))
+  print(paste0("Split select_one questions for Ranking: DONE", Sys.time()))
   return(db_rec)
 }
 NULL

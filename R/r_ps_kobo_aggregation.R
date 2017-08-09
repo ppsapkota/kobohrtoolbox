@@ -29,7 +29,7 @@ Last modified: 6 Aug 2017
       # }
 ###############--------SPLIT RANK SELECT ONE TO MULTIPLE------------###################
       data<-split_select_one_rank(data,dico)
-      write_csv(data,gsub(".xlsx","_SPLIT_RANK_step01.csv",data_fname),na='NA')
+      write_csv(data,gsub(".xlsx","_S1_Step01_SPLIT_RANK.csv",data_fname),na='NA')
 ###############------------------------------------------------------###################      
       
       
@@ -147,49 +147,53 @@ Last modified: 6 Aug 2017
         data_level,
         data
       )
-      write_csv(data,gsub(".xlsx","_CL_Step02.csv",data_fname),na='NA')
-#-----------Get the unique locations for AGGREGATION FRAME----------------------------------------
+      write_csv(data,gsub(".xlsx","_S1_Step02_CL.csv",data_fname),na='NA')
+#--------AGGREGATION PREPARATION------------------#
+      #ODK forms
+      agg_method_all<-as.data.frame(filter(survey, type!="begin_group", type!="note",type!="end_group"))
+      choices<-dico
     
-    #data
-    db<-data
+      
+      #data
+      db_all<-data
+      
+        #add number of records per agg_geo_level
+        d_nr<-db_all %>% 
+          group_by_(agg_geo_colname) %>% 
+          summarise(num_record=n()) %>% 
+          ungroup()
+        
+      db_all<-left_join(db_all,d_nr,by=agg_geo_colname) 
+      write_csv(db_all,gsub(".xlsx","_S1_Step03_COUNT_DUPLICATE.csv",data_fname),na='NA')  
+      
+    #********A step can be incorporated here******************
+    #separate db_dupl with duplicate records
+    #separate db_no_dupl
+    #db<-db_dupl and run the aggregation process for communities where more than one records are submitted
+    #merge data (db_agg and db_no_dupl) in later stage
+    db<-db_all
+      
     db_heading<-names(db)  
+  #--AGGREGATION OUTPUT FRAME------------
+    #Get unique community list for the aggregation frame
     agg_geo_colname<-"agg_pcode"
-    
     agg_geo_level<-distinct(as.data.frame(db[,"agg_pcode"]))  
     names(agg_geo_level)[1] <- "agg_pcode"
-    db_agg<-agg_geo_level  
-    #ODK forms
-    agg_method_all<-as.data.frame(filter(survey, type!="begin_group", type!="note",type!="end_group"))
-    choices<-dico
+    
+    #Prepare aggregation frame
+    db_agg<-agg_geo_level
+    db_agg<-left_join(db_agg,d_nr,by=agg_geo_colname)
+    print(paste0("Aggregate data - Start: ",Sys.time()))  
+    
+    write_csv(db_agg,gsub(".xlsx","_AGG_Step00_FRAME.csv",data_fname),na='NA')
+    
     
     ###############--------ORDINAL TO SCORE------------###################
     
     db<-assign_ordinal_score_bylabel(db,choices)
-    write_csv(db,gsub(".xlsx","_ORD_RECODING_Step03.csv",data_fname),na='NA')
+    write_csv(db,gsub(".xlsx","_S1_Step04_ORD_RECODING.csv",data_fname),na='NA')
     
     ###############------------------------------------###################
-    #add number of records per agg_geo_level
-    d_nr<-db %>% 
-      group_by_(agg_geo_colname) %>% 
-      summarise(num_record=n()) %>% 
-      ungroup()
-    
-    db<-left_join(db,d_nr,by=agg_geo_colname) 
-    write_csv(db,gsub(".xlsx","_COUNT_DUPLICATE_Step04.csv",data_fname),na='NA')
-    
-#********A step can be incorporated here******************
-      #separate db_dupl with duplicate records
-      #separate db_no_dupl
-      #db<-db_dupl and run the aggregation process for communities where more than one records are submitted
-      #merge data (db_agg and db_no_dupl) in later stage
-    
-    
-    #Prepare aggregation frame
-    db_agg<-left_join(db_agg,d_nr,by=agg_geo_colname)
-    print(paste0("Aggregate data - Start: ",Sys.time()))  
-    
-    write_csv(db_agg,gsub(".xlsx","_AGG_FRAME_Step00.csv",data_fname),na='NA')
-    
     
     #Loop through each column of the main data
       #-identify question and aggregation type    
@@ -276,7 +280,7 @@ Last modified: 6 Aug 2017
         i_aggmethod<-"DONOTHING"
       }
       
-      print(paste0("Running - ",agg_heading, " Column:",j))
+      print(paste0("Running - ",agg_heading, " - Column:",j))
       
       #Confidence level column
        if (sector=="intersector"){
@@ -297,13 +301,9 @@ Last modified: 6 Aug 2017
         cf_level<-cf_level_erl
        }else {cf_level<-rep(1,nrow(db))} 
       
-      #-------to do---------
-          #RANK3 - one more step remaining
-          #SEL_ALL
-          #SEL_1 - one more thing remaining no answer and answer
-      #---------------------
       
-      #NOW - THE AGGREGATION STARTS
+      
+####---THE AGGREGATION STARTS---####
         #Average (Confidence Level Weighted)
           if (i_aggmethod=="AVG_W"|i_aggmethod=="ORD_1"){
             d<-"a"
@@ -453,7 +453,7 @@ Last modified: 6 Aug 2017
             db_agg<-left_join(db_agg,d,by=agg_geo_colname)
             rm(list=c("ldt","d","i_heading","vn_agg"))
 
-            write_csv(db_agg,paste0(j,".csv"),na='NA')
+            #write_csv(db_agg,paste0(j,".csv"),na='NA')
             
         #SELECT multiple
           }else if (i_aggmethod=="SEL_ALL" | i_aggmethod=="SEL_3" | i_aggmethod=="SEL_4"){
@@ -513,27 +513,44 @@ Last modified: 6 Aug 2017
             rm(list=c("d","i_heading","vn_agg"))
           }
       
-      print(paste0(nrow(db_agg),"---",j))
-      
+      print(paste0(nrow(db_agg),"---",j)) #For checking - remove at the end
       
     }#while
    
-      write_csv(db_agg,gsub(".xlsx","_AGG_withScore_Step01.csv",data_fname),na='NA')  
+      write_csv(db_agg,gsub(".xlsx","_Step01_AGG_WITH_SCORE.csv",data_fname),na='NA')  
 
       db_agg<-sapply(db_agg,as.character)
       db_agg<-data.frame(db_agg,stringsAsFactors=FALSE,check.names=FALSE)    
-    
-###############--------ORDINAL SCORE TO VARIABLE NAME------------###################
-    db_agg<-assign_ordinal_label_byscore(db_agg,choices)
-    write_csv(db_agg,gsub(".xlsx","_AGG_ORD_LABEL_Step02.csv",data_fname),na='NA')
-    
-###############--------------------------------------------------###################
-    
-    
-    
-    
-write_csv(db_agg,gsub(".xlsx","_AGG_FINAL.csv",data_fname),na='NA')
+  
+####---REFINE AGGREGATION RESULTS---####
+        
+    ###############--------ORDINAL SCORE TO VARIABLE NAME------------###################
+      db_agg<-assign_ordinal_label_byscore(db_agg,choices)
+      write_csv(db_agg,gsub(".xlsx","_AGG_Step02_ORD2LABEL.csv",data_fname),na='NA')
       
+    ###############--------------------------------------------------###################
+    
+    ###############--------SELECT_MULTIPLE (ALL) SCORE TO 0/1------------###################
+      db_agg<-select_all_score2zo(db_agg,agg_method_all)
+      write_csv(db_agg,gsub(".xlsx","_AGG_Step03_SEL_ALL.csv",data_fname),na='NA')
+      
+    ###############--------------------------------------------------###################    
+    
+    ###############--------SELECT_MULTIPLE (THREE/FOUR) SCORE TO 0/1------------###################
+      db_agg<-select_upto_n_score2zo(db_agg,agg_method_all)
+      write_csv(db_agg,gsub(".xlsx","_AGG_Step04_SEL3.csv",data_fname),na='NA')
+      
+    ###############--------------------------------------------------###################
+    
+    ###############--------RANK SCORE TO 0/1------------###################
+      # db_agg<-select_rank_score2rank(db_agg,agg_method_all)
+      # write_csv(db_agg,gsub(".xlsx","_AGG_Step05_RANK.csv",data_fname),na='NA')
+      
+    ###############--------------------------------------------------###################    
+    
+write_csv(db_agg,gsub(".xlsx","_AGG_Step06_FINAL.csv",data_fname),na='NA')
+
+print(paste0("Done - ", Sys.time()))    
       
       
       

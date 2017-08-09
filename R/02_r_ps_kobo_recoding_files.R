@@ -27,7 +27,7 @@ Last modified: 11 July 2017
       # data_label<-kobo_encode(data,dico)
       
       #recode all the files in the folder
-      csv_path<-"./data/data_export_csv/"
+      csv_path<-"./data/data_final/"
       listfiles<-list.files(csv_path,".csv")
       
       for (i in 1:length(listfiles)){
