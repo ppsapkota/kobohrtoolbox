@@ -34,21 +34,13 @@ Last modified: 11 July 2017
         fname<-listfiles[i]
         data<-read.csv(paste0(csv_path,fname),na="n/a",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)
         #--do not include admin columns in recoding
-        #rename fields
-        #"Q_M/Q_M1"                                                                             
-        #"Q_M/Q_M2"                                                                             
-        #"Q_M/Q_M3"                                                                             
-        #"Q_M/Q_M4"                                                                             
-        #"Q_M/Q_M5"         #
         #data<-rename(data,"admin1pcode"="Q_M/Q_M1","admin2pcode"="Q_M/Q_M2","admin3pcode"="Q_M/Q_M3","admin4pcode"="Q_M/Q_M4","neighpcode"="Q_M/Q_M5")
         admin1pcode <-data[,c("Q_M/Q_M1")]
         admin2pcode <-data[,c("Q_M/Q_M2")]
         admin3pcode <-data[,c("Q_M/Q_M3")]
         admin4pcode <-data[,c("Q_M/Q_M4")]
         neighpcode <-data[,c("Q_M/Q_M5")]
-        #
-        #
-        #
+        
         data<-cbind(
               admin1pcode,
               admin2pcode,
@@ -63,15 +55,8 @@ Last modified: 11 July 2017
         write.xlsx2(data_label,gsub("\\.csv", "_recode.xlsx",paste0(csv_path,fname)), row.names = FALSE)
         print(paste0("Finished Encoding file - ", fname, ' - End time =', Sys.time()))
       } 
-#3-----------------MERGE ALL FILES IN THE FOLDER-----------------------------------------------------------------------
-      csv_path<-"./data/data_export_csv/"
-      merged_files<-multi_files_merge_csv(csv_path)
-      write.xlsx2(merged_files,paste0(csv_path,"multisector_assessment_raw_data_all.xlsx"), row.names = FALSE)
       
-
-      
-      
-      
+     
       
       
       

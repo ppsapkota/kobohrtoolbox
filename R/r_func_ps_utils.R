@@ -29,9 +29,19 @@ readCSVwriteXLSX<-function(fname){
   #dbc<-read_csv(fname, col_types="text")
   fname_xlsx = gsub("\\.csv","\\.xlsx",fname)
   #-----create file path in 'CSV' folder-----
-  fname_xlsx = gsub(basename(fname_xlsx),paste0("XLSX/",basename(fname_xlsx)),fname_xlsx)
+  #fname_xlsx = gsub(basename(fname_xlsx),paste0("XLSX/",basename(fname_xlsx)),fname_xlsx)
   write.xlsx2(dbc,file=fname_xlsx, row.names = FALSE)
-}
+  
+  #--open xlsx--
+  # openxlsx::write.xlsx(x=dbc,file=fname_xlsx)
+   #
+   # wb<-openxlsx::createWorkbook()
+   # openxlsx::addWorksheet(wb, "data")
+   # openxlsx::writeData(wb, sheet=1, x=dbc, rowNames = FALSE)
+   # openxlsx::saveWorkbook(wb, file =fname_xlsx, overwrite = TRUE)
+  #Write slow process
+  #write_big.xlsx2(dbc,fname_xlsx,"data")
+  }
 
 #create roundup function	
 round2 = function(x, n) {
@@ -47,27 +57,37 @@ round2 = function(x, n) {
 #function coerce to numbers
 conv_num<-function(x){as.numeric(as.character(x))}
 
-#replace some funny characters 
-replace_chars_incol <- function(db,colname){
-  db$colname<-str_replace_all(db$colname,c('\\.'='_','\\*'='','\\:'='','/'='','\\?'=''))
+### write big excel
+write_big.xlsx2<-function(db,filen,sheetname){
+  wb<- createWorkbook(type="xlsx")
+  sheet <- createSheet(wb, sheetName=sheetname)
+  
+  print(paste0("Writing ", nrow(db), " records"))
+  
+  # Add the first data frame
+  addDataFrame(db[1,], sheet, col.names=TRUE,row.names = FALSE, startRow=1, startColumn=1)
+  start_row = 3 #including header and first data record 
+  for (i in 2:nrow(db)) {
+    addDataFrame(db[i,], sheet=sheet, row.names=FALSE, col.names=FALSE, startRow=start_row)
+    start_row = start_row + 1
+  }
+  saveWorkbook(wb, filen)
 }
 
 
-### write big excel
-wbig.xlsx<-function(db,filen,sheetname){
-  newWB <- loadWorkbook(filen,create=TRUE)	
-  createSheet(newWB,name=sheetname)
-  tot.rows <- nrow(db)
-  last.row =0
-  for (i in seq(ceiling( tot.rows / 1) )) {
-    if(i==1){
-      writeWorksheet(newWB, db[i,],sheet=sheetname,header=TRUE, startRow=i)
-    }else{
-      writeWorksheet(newWB, db[i,], sheet=sheetname, header=FALSE, startRow=i+1)
+
+#fields to remove
+remove_fields<-function(db, rm_list){
+  for (i in 1:nrow(rm_list)){
+    i_vname<-rm_list[i,1]
+    ind<-which(names(db)==i_vname)
+    if (length(ind)>0){
+      db<-select_(db,-ind)
     }
-    print(i)
-    saveWorkbook(newWB)
   }
-} 
+  return(db)
+}
+NULL
+
 
 

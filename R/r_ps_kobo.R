@@ -16,8 +16,8 @@ Last modified: 11 July 2017
   dico<-data.frame(dico,stringsAsFactors = FALSE,check.names = FALSE)
   
     #Some clean up label
-    ind<-which(names(dico)=="label")
-    dico[,ind]<-str_replace_all(dico[,ind],c('\\.'='_','\\*'='','\\:'='','/'=' ','\\?'=''))
+    #ind<-which(names(dico)=="label")
+    #dico[,ind]<-str_replace_all(dico[,ind],c('\\.'='_','\\*'='','\\:'='','/'=' ','\\?'=''))
     
       #read data
       # kobo_data_fname<-"./data/data_export_csv/syria_msna_2018_1705_centre_145455_data.csv"
@@ -27,7 +27,7 @@ Last modified: 11 July 2017
       # data_label<-kobo_encode(data,dico)
       
       #recode all the files in the folder
-      csv_path<-"./data/data_final/"
+      csv_path<-"./Data/01_Download_CSV/"
       listfiles<-list.files(csv_path,".csv")
       
       for (i in 1:length(listfiles)){
@@ -46,8 +46,6 @@ Last modified: 11 July 2017
         admin3pcode <-data[,c("Q_M/Q_M3")]
         admin4pcode <-data[,c("Q_M/Q_M4")]
         neighpcode <-data[,c("Q_M/Q_M5")]
-        #
-        #
         #
         data<-cbind(
               admin1pcode,
@@ -82,7 +80,17 @@ Last modified: 11 July 2017
       
       
       
+      # Load workbook (create if not existing)
+      wb <- loadWorkbook(demoExcelFile, create = TRUE)
       
+      # Create a worksheet called 'Dummy'
+      createSheet(wb, name = "Dummy")
+      
+      # Write large data.frame to worksheet 'Dummy' created above
+      writeWorksheet(wb, dfLarge, sheet = "Dummy")
+      
+      # Save workbook (this actually writes the file to disk)
+      saveWorkbook(wb)
       
       
       
@@ -162,7 +170,7 @@ write_csv(d_formlist_csv,paste0("./data/","formlist_csv.csv"))
 
 
 ###-------PLAYGROUND BLOCK-----------
-  d_rawi<-kobohr_getdata("https://kc.humanitarianresponse.info/api/v1/data/81471",kobo_user,Kobo_pw)
+  d_rawi<-kobohr_getdata("https://kc.humanitarianresponse.info/api/v1/data/145468",kobo_user,Kobo_pw)
   #replace "/" in the field header
   names(d_rawi)<-str_replace_all(names(d_rawi),"/","_")
   #select few fields that are relevant for coverage mapping
@@ -174,8 +182,11 @@ write_csv(d_formlist_csv,paste0("./data/","formlist_csv.csv"))
   #curl -X GET 'https://kc.humanitarianresponse.info/api/v1/data/22845?query={"kind": "monthly"}'
   
   #extract only selected data fields
-  url<-'https://kc.humanitarianresponse.info/api/v1/data/79489.csv' #works
-  d<-kobohr_getdata_csv(url,kobo_user,Kobo_pw)
+  url<-'https://kc.humanitarianresponse.info/api/v1/data/145468.csv' #works
+  d_rawi<-kobohr_getdata_csv(url,kobo_user,Kobo_pw)
+  
+  
+  
   
   url<-paste0("https://kc.humanitarianresponse.info/api/v1/data/145533.csv?fields=[" , '"Q_M_Q_M1","Q_M_Q_M3"', "]") # does not work
   rawdata<-GET(url,authenticate(u,pw),progress())
@@ -217,5 +228,14 @@ write_csv(d_formlist_csv,paste0("./data/","formlist_csv.csv"))
       
       
       
+#write big xlsx
+      csv_path<-"./data/data_final/"
+      fname<-"multisector_assessment_raw_data_all_recode_AGG_Step06_FINAL.csv"
+      a_db<-read.csv(paste0(csv_path,fname),na="n/a",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)
       
-
+      save_fname<-paste0(csv_path,gsub(".csv",".xlsx",fname))
+      
+      write_big.xlsx2(a_db,save_fname,"data")
+      Sys.setenv("R_ZIPCMD" = "C:/Rtools/bin/zip.exe")
+      openxlsx::write.xlsx(a_db,save_fname,"dat")
+      

@@ -13,6 +13,11 @@ csv_path<-paste0("./data/data_export_csv_coverage")
 d_merged<- multi_files_merge_csv(csv_path)
 write_csv(d_merged,paste0(csv_path,"/data_merged.csv"))
 
+
+
+
+
+
 #--------check neighbourhood pcode for major cities-------
 xlsx_neigh_file<-paste0("./data/neigh_chk_pcode.xlsx")
 d_neigh_comlist<-read_excel(xlsx_neigh_file)
