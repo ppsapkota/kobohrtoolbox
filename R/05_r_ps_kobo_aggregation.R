@@ -500,6 +500,9 @@ Last modified: 6 Aug 2017
             #join to the expanding aggregation data
             db_agg<-left_join(db_agg,d,by="agg_pcode")
             rm(list=c("ldt","d","i_heading","vn_agg"))
+          
+          }else if (i_aggmethod=="DONOTHING"){
+            #just skip the field and don't include in the final resulting data
             
         #Everythind else return 'NA' Column
           }else {
@@ -517,7 +520,7 @@ Last modified: 6 Aug 2017
       
     }#while
    
-      write_csv(db_agg,gsub(".xlsx","_Step01_AGG_WITH_SCORE.csv",data_fname),na='NA')  
+      write_csv(db_agg,gsub(".xlsx","_AGG_Step01_WITH_SCORE.csv",data_fname),na='NA')  
 
       db_agg<-sapply(db_agg,as.character)
       db_agg<-data.frame(db_agg,stringsAsFactors=FALSE,check.names=FALSE)    
@@ -543,12 +546,32 @@ Last modified: 6 Aug 2017
     ###############--------------------------------------------------###################
     
     ###############--------RANK SCORE TO 0/1------------###################
-      # db_agg<-select_rank_score2rank(db_agg,agg_method_all)
-      # write_csv(db_agg,gsub(".xlsx","_AGG_Step05_RANK.csv",data_fname),na='NA')
+       db_agg<-select_rank_score2rank(db_agg,agg_method_all)
+       write_csv(db_agg,gsub(".xlsx","_AGG_Step05_RANK.csv",data_fname),na='NA')
       
     ###############--------------------------------------------------###################    
     
-write_csv(db_agg,gsub(".xlsx","_AGG_Step06_FINAL.csv",data_fname),na='NA')
+       #Separate consideration for Areas of Origin locations
+       location_aoo1<-as.data.frame(db[,c("agg_pcode","cf_level_is","Q_1/Q_1_2_A/Q_1_2_A_1/Q_1_2_A_1_1","Q_1/Q_1_2_A/Q_1_2_A_1/Q_1_2_A_1_2","Q_1/Q_1_2_A/Q_1_2_A_1/Q_1_2_A_1_3")])
+       location_aoo2<-as.data.frame(db[,c("agg_pcode","cf_level_is","Q_1/Q_1_2_A/Q_1_2_A_2/Q_1_2_A_2_1","Q_1/Q_1_2_A/Q_1_2_A_2/Q_1_2_A_2_2","Q_1/Q_1_2_A/Q_1_2_A_2/Q_1_2_A_2_3")])
+       location_aoo3<-as.data.frame(db[,c("agg_pcode","cf_level_is","Q_1/Q_1_2_A/Q_1_2_A_3/Q_1_2_A_3_1","Q_1/Q_1_2_A/Q_1_2_A_3/Q_1_2_A_3_2","Q_1/Q_1_2_A/Q_1_2_A_3/Q_1_2_A_3_3")])
+       location_aoo4<-as.data.frame(db[,c("agg_pcode","cf_level_is","Q_1/Q_1_2_A/Q_1_2_A_4/Q_1_2_A_4_1","Q_1/Q_1_2_A/Q_1_2_A_4/Q_1_2_A_4_2","Q_1/Q_1_2_A/Q_1_2_A_4/Q_1_2_A_4_3")])
+       location_aoo5<-as.data.frame(db[,c("agg_pcode","cf_level_is","Q_1/Q_1_2_A/Q_1_2_A_5/Q_1_2_A_5_1","Q_1/Q_1_2_A/Q_1_2_A_5/Q_1_2_A_5_2","Q_1/Q_1_2_A/Q_1_2_A_5/Q_1_2_A_5_3")])
+       #change the header name
+       names(location_aoo1)<-c("agg_pcode","cf_level","admin1name_aoo","admin2name_aoo","admin3name_aoo")
+       names(location_aoo2)<-c("agg_pcode","cf_level","admin1name_aoo","admin2name_aoo","admin3name_aoo")
+       names(location_aoo3)<-c("agg_pcode","cf_level","admin1name_aoo","admin2name_aoo","admin3name_aoo")
+       names(location_aoo4)<-c("agg_pcode","cf_level","admin1name_aoo","admin2name_aoo","admin3name_aoo")
+       names(location_aoo5)<-c("agg_pcode","cf_level","admin1name_aoo","admin2name_aoo","admin3name_aoo")
+       
+       location_aoo_all<-bind_rows(location_aoo1,location_aoo2,location_aoo3,location_aoo4,location_aoo5)
+       location_aoo_all<-location_area_of_origin(location_aoo_all)	
+       location<-unique(db[,c("agg_pcode","admin1pcode","admin2pcode","admin3pcode","admin4pcode","neighpcode")])	
+       location_aoo_all<-left_join(location,location_aoo_all,by="agg_pcode")
+       write_csv(location_aoo_all,gsub(".xlsx","_AGG_Step06_AoO_Location.csv",data_fname),na='NA')
+       
+       
+write_csv(db_agg,gsub(".xlsx","_AGG_Step07_FINAL.csv",data_fname),na='NA')
 
 print(paste0("Done - ", Sys.time()))    
       

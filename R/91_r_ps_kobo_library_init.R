@@ -32,7 +32,7 @@ source("./R/r_func_ps_recode_from_odk.R")
 source("./R/r_func_ps_recode_metadata_odk.R")
 source("./R/r_func_ps_split_select_one.R")
 source("./R/r_func_ps_select_multiple_score2zo.R")
-
+source("./R/r_func_ps_recode_ordinal_odk.R")
 
 path <- Sys.getenv("PATH")
 Sys.setenv("PATH" = paste(path, "C:/Rtools/bin", sep = ";"))

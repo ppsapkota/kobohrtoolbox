@@ -12,7 +12,7 @@ Last modified: 8 August 2017
 ##loop through each form and fetch data for individual form and export to CSV
 #read list of forms in the KoBo account - list of forms created with 'kobohr_getforms_csv' function
 #--EXPORT data to individual csv files
-d_formlist_csv <-read_excel("./data/syriaregional3_formlist.xlsx",sheet=1)
+d_formlist_csv <-read_excel("./Data/syriaregional3_formlist.xlsx",sheet=1)
 #download only marked as downloadable
 d_formlist_csv<-filter(d_formlist_csv,download=="Yes")
 
@@ -39,7 +39,7 @@ for (i in 1:nrow(d_formlist_csv)){
        }
       #write to csv
       #save file name
-      savefile <- paste0("./data/data_export_csv/",d_formlist_csv$id_string[i],"_", d_formlist_csv$id[i],"_data.csv")
+      savefile <- paste0("./Data/01_Download_CSV/",d_formlist_csv$id_string[i],"_", d_formlist_csv$id[i],"_data.csv")
       write_csv(d_rawi,savefile)
       #save as exlsx
       #savefile_xlsx <- paste0("./data/data_export_csv/",d_formlist_csv$id_string[i],"_", d_formlist_csv$id[i],"_data.xlsx")

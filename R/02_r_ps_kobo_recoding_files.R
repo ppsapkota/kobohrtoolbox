@@ -27,12 +27,19 @@ Last modified: 11 July 2017
       # data_label<-kobo_encode(data,dico)
       
       #recode all the files in the folder
-      csv_path<-"./data/data_final/"
-      listfiles<-list.files(csv_path,".csv")
+      csv_path<-"./Data/04_Ready_for_recode/"
+      #listfiles<-list.files(csv_path,".csv") #change here
+      listfiles<-list.files(csv_path,".xlsx")
       
       for (i in 1:length(listfiles)){
         fname<-listfiles[i]
-        data<-read.csv(paste0(csv_path,fname),na="n/a",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)
+        save_fname<-gsub("\\.xlsx", "_recode.xlsx",paste0(csv_path,fname))
+        #save_fname<-gsub("\\.csv", "_recode.xlsx",paste0(csv_path,fname)) #change here
+        
+        #data<-read.csv(paste0(csv_path,fname),na="n/a",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE) #change here
+        #optional for XLSX reading
+        data=as.data.frame(read_excel(paste0(csv_path,fname),na="n/a",col_types ="text"))
+        
         #--do not include admin columns in recoding
         #data<-rename(data,"admin1pcode"="Q_M/Q_M1","admin2pcode"="Q_M/Q_M2","admin3pcode"="Q_M/Q_M3","admin4pcode"="Q_M/Q_M4","neighpcode"="Q_M/Q_M5")
         admin1pcode <-data[,c("Q_M/Q_M1")]
@@ -52,8 +59,11 @@ Last modified: 11 July 2017
         print(paste0("Start Encoding file - ", fname, ' - Start time =', Sys.time()))
         data_label<-kobo_encode(data,dico)
         print(paste0("Finished Encoding file - ", fname, ' - End time =', Sys.time()))
-        write.xlsx2(data_label,gsub("\\.csv", "_recode.xlsx",paste0(csv_path,fname)), row.names = FALSE)
-        print(paste0("Finished Encoding file - ", fname, ' - End time =', Sys.time()))
+        
+        write.xlsx2(data_label,save_fname, row.names = FALSE)
+        
+        
+        #print(paste0("Finished Encoding file - ", fname, ' - End time =', Sys.time()))
       } 
       
      

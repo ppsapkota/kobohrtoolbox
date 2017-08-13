@@ -54,7 +54,7 @@ kobo_encode <- function(data, dico) {
       data_names[col_ind]<-gnamelabel
       #names(data_rec)[col_ind]<- gnamelabel
       ##CHANGE all True/False to 1/0
-      data_rec[,col_ind]<-ifelse(data_rec[,col_ind]=="True",1,ifelse(data_rec[,col_ind]=="False",0,data_rec[,col_ind]))
+      data_rec[,col_ind]<-ifelse(data_rec[,col_ind]=="True"|data_rec[,col_ind]=="TRUE",1,ifelse(data_rec[,col_ind]=="False"|data_rec[,col_ind]=="FALSE",0,data_rec[,col_ind]))
     }
     names(data_rec)<-data_names
     #
