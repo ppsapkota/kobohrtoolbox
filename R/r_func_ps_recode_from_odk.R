@@ -8,7 +8,7 @@ kobo_encode <- function(data, dico) {
   ### Now we can also re-encode the records themself
   ##CASE 1 - Select_one
     #-select all the field headers for select one
-    dico_s1<-as.data.frame(filter(dico,qtype=="select_one"))
+    dico_s1<-as.data.frame(filter(dico,qtype=="select_one" & recodevar!="NO"))
     #--loop through all the rows or take all value
     dico_s1_headers<-distinct(as.data.frame(dico_s1[,"gname"]))
     data_rec<-data # dont see any reason to do it

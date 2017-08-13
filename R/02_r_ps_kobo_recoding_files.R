@@ -58,7 +58,7 @@ Last modified: 11 July 2017
               )
         print(paste0("Start Encoding file - ", fname, ' - Start time =', Sys.time()))
         data_label<-kobo_encode(data,dico)
-        print(paste0("Finished Encoding file - ", fname, ' - End time =', Sys.time()))
+        #print(paste0("Finished Encoding file - ", fname, ' - End time =', Sys.time()))
         
         write.xlsx2(data_label,save_fname, row.names = FALSE)
         
