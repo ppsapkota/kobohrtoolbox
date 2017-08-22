@@ -38,7 +38,7 @@ Last modified: 11 July 2017
         
         #data<-read.csv(paste0(csv_path,fname),na="n/a",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE) #change here
         #optional for XLSX reading
-        data=as.data.frame(read_excel(paste0(csv_path,fname),na="n/a",col_types ="text"))
+        data=as.data.frame(read_excel(paste0(csv_path,fname),na="NA",col_types ="text"))
         
         #--do not include admin columns in recoding
         #data<-rename(data,"admin1pcode"="Q_M/Q_M1","admin2pcode"="Q_M/Q_M2","admin3pcode"="Q_M/Q_M3","admin4pcode"="Q_M/Q_M4","neighpcode"="Q_M/Q_M5")
@@ -59,9 +59,9 @@ Last modified: 11 July 2017
         print(paste0("Start Encoding file - ", fname, ' - Start time =', Sys.time()))
         data_label<-kobo_encode(data,dico)
         #print(paste0("Finished Encoding file - ", fname, ' - End time =', Sys.time()))
-        
-        write.xlsx2(data_label,save_fname, row.names = FALSE)
-        
+        data_label[is.na(data_label)] <- 'NA'
+        #write.xlsx2(data_label,save_fname, row.names = FALSE)
+        openxlsx::write.xlsx(data_label,save_fname,sheetName="data", row.names = FALSE)
         
         #print(paste0("Finished Encoding file - ", fname, ' - End time =', Sys.time()))
       } 

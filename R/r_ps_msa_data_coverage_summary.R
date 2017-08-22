@@ -25,7 +25,7 @@ d_neigh_comlist<-read_excel(xlsx_neigh_file)
 d_merged <- left_join(d_merged,d_neigh_comlist,by=c("Q_M_Q_M4"="admin4Pcode"))
 #filter list with problematic community names
 d_neigh_pcode_missing<-filter(d_merged,admin4Name_en!="")
-write.xlsx2(d_neigh_pcode_missing,paste0(csv_path,"/data_merged_missing_neigh_pcode_list.xlsx"))
+openxlsx::write.xlsx(d_neigh_pcode_missing,paste0(csv_path,"/data_merged_missing_neigh_pcode_list.xlsx"))
 
 #----------count number of submissions by organisations---------
 d_merged_group<- d_merged %>% 

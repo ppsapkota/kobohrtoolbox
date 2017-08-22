@@ -10,5 +10,5 @@ Last modified: 27 July 2017
 csv_link<-'https://kc.humanitarianresponse.info/api/v1/forms.csv'
 save_fname <- paste0("./data/",kobo_user,"_formlist_details.xlsx")
 d_formlist<-kobohr_getforms_csv(csv_link,kobo_user,Kobo_pw)
-write.xlsx2(d_formlist,save_fname,sheetName = "formlist")
+write.xlsx(d_formlist,save_fname,sheetName = "formlist")
 

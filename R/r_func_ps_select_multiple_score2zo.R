@@ -29,7 +29,7 @@ select_all_score2zo <- function(data1, agg_method1) {
 NULL
 
 select_upto_n_score2zo <- function(data1, agg_method1) {
-  print(paste0("Recode select all values to 1/0"))
+  print(paste0("Recode select top 3/top 4 values to 1/0"))
   ### First we provide attribute label to variable name
   #data.label <- as.data.frame(names(data))
   #data<-as.data.frame(data,stringsAsFactors=FALSE,check.names=FALSE)
@@ -66,6 +66,11 @@ select_upto_n_score2zo <- function(data1, agg_method1) {
       }else{
         for(ir in 1:ncol(rank3)){rank3[,ir]<- rank3[,ir]<=3}
       }
+      
+      #change true false to 1/0
+      for (ir in 1:ncol(rank3)){
+        rank3[,ir]<-ifelse(rank3[,ir]=="True"|rank3[,ir]=="TRUE",1,ifelse(rank3[,ir]=="False"|rank3[,ir]=="FALSE",0,rank3[,ir]))
+      }
       #Replace values in the main table
       data_rec[,col_ind]<-rank3
       
@@ -88,7 +93,7 @@ select_rank_score2rank <- function(data1, agg_method1) {
   #data<-as.data.frame(data,stringsAsFactors=FALSE,check.names=FALSE)
   data_names<-names(data1)
   #-select all the field headers for select one
-  agg_rank<-filter(agg_method1,aggmethod=="RANK3" | aggmethod=="RANK4")
+  agg_rank<-filter(agg_method1,aggmethod=="RANK1"|aggmethod=="RANK3" | aggmethod=="RANK4")
   #--loop through all the rows or take all value
   agg_rank_headers<-distinct(as.data.frame(agg_rank[,c("qrankgroup","aggmethod")]))
   data_rec<-as.data.frame(data1) # dont see any reason to do it
@@ -119,6 +124,10 @@ select_rank_score2rank <- function(data1, agg_method1) {
       if(i_type=="RANK4"){
           for(ir in 1:ncol(rank3)){
            rank3[,ir]<-ifelse(rank3[,ir]>4,NA,rank3[,ir])
+          }
+      }else if (i_type=="RANK1"){
+          for(ir in 1:ncol(rank3)){
+            rank3[,ir]<-ifelse(rank3[,ir]>1,NA,rank3[,ir])
           }
       }else{
           for(ir in 1:ncol(rank3)){

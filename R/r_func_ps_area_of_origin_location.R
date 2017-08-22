@@ -16,6 +16,6 @@ location_area_of_origin<-function(db_location){
     #Get UNIQUE here
     d<-unique(d[,1:4])
     #db_agg<-left_join(db_agg,d,by=agg_geo_colname)
-    rm(list=c("ldt","d"))
+    rm(list=c("ldt"))
     return(d)
 }

@@ -12,7 +12,9 @@ Last modified: 8 August 2017
 ##loop through each form and fetch data for individual form and export to CSV
 #read list of forms in the KoBo account - list of forms created with 'kobohr_getforms_csv' function
 #--EXPORT data to individual csv files
-d_formlist_csv <-read_excel("./Data/syriaregional3_formlist.xlsx",sheet=1)
+d_formlist_csv <-read_excel("./Data/syriaregional3_formlist.xlsx",sheet=1) #TUR
+#d_formlist_csv <-read_excel("./Data/syriaregional1_formlist.xlsx",sheet=1) #JOR
+#d_formlist_csv <-read_excel("./Data/syriaregional2_formlist.xlsx",sheet=1) #DAM
 #download only marked as downloadable
 d_formlist_csv<-filter(d_formlist_csv,download=="Yes")
 
@@ -41,9 +43,11 @@ for (i in 1:nrow(d_formlist_csv)){
       #save file name
       savefile <- paste0("./Data/01_Download_CSV/",d_formlist_csv$id_string[i],"_", d_formlist_csv$id[i],"_data.csv")
       write_csv(d_rawi,savefile)
-      #save as exlsx
-      #savefile_xlsx <- paste0("./data/data_export_csv/",d_formlist_csv$id_string[i],"_", d_formlist_csv$id[i],"_data.xlsx")
+      #save as xlsx
+      d_rawi[is.na(d_rawi)] <- 'NA'
+      savefile_xlsx <- paste0("./Data/01_Download_CSV/",d_formlist_csv$id_string[i],"_", d_formlist_csv$id[i],"_data.xlsx")
       #write.xlsx2(as.data.frame(d_rawi),savefile_xlsx,sheetName = "data",row.names = FALSE)
+      openxlsx::write.xlsx(d_rawi,savefile_xlsx,sheetName="data",row.names=FALSE)
   }
 }
 

@@ -1,12 +1,13 @@
 '----
 Developed by: Punya Prasad Sapkota
 Reference: Tool developed by Olivier/REACH
-Last modified: 6 Aug 2017
+Last modified: 20 Aug 2017
 ----'
 
-#4-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
+#-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
 ##-----data preparation---------
-      data_fname<-"./data/data_final/multisector_assessment_raw_data_all_recode.xlsx"
+      data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
+      print(paste0("Reading data file - ", Sys.time())) 
       data<-read_excel(data_fname,col_types ="text",na='NA')
       #data<-read.csv(data_fname,na="NA",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)
       data<-as.data.frame(data)
@@ -17,8 +18,8 @@ Last modified: 6 Aug 2017
       dico<-read_excel(nameodk,sheet="choices",col_types ="text")
      
       #--key
-      key<-row.names(data)
-      data<-cbind(key, data)
+      #key<-row.names(data)
+      #data<-cbind(key, data)
       #some cleanup of the data
       for (kl in 1:ncol(data)){
         data[,kl]<-ifelse(data[,kl]=="NA" | data[,kl]=="" | data[,kl]=="NULL" | is.nan(data[,kl]),NA,data[,kl])
@@ -46,6 +47,8 @@ Last modified: 6 Aug 2017
         ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
         
         cf_level_is<-dc_method[,4]+ki_type[,4]
+        cf_level_is[is.nan(cf_level_is)]<-NA
+        
       #-CCCM
         dc_method<-as.data.frame(data[,c("Q_2/Q_2k_1/Q_2k_1_c","Q_2/Q_2k_2/Q_2k_2_c","Q_2/Q_2k_3/Q_2k_3_c")])
         dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
@@ -57,6 +60,7 @@ Last modified: 6 Aug 2017
         ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
         
         cf_level_cccm<-dc_method[,4]+ki_type[,4]
+        cf_level_cccm[is.nan(cf_level_cccm)]<-NA
       
       #-Education
         dc_method<-as.data.frame(data[,c("Q_3/Q_3k_1/Q_3k_1_c","Q_3/Q_3k_2/Q_3k_2_c","Q_3/Q_3k_2/Q_3k_3/Q_3k_3_c")])
@@ -69,6 +73,7 @@ Last modified: 6 Aug 2017
         ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
         
         cf_level_edu<-dc_method[,4]+ki_type[,4]
+        cf_level_edu[is.nan(cf_level_edu)]<-NA
         
       #-FSS
         dc_method<-as.data.frame(data[,c("Q_4/Q_4k_1/Q_4k_1_c","Q_4/Q_4k_2/Q_4k_2_c","Q_4/Q_4k_3/Q_4k_3_c")])
@@ -81,7 +86,8 @@ Last modified: 6 Aug 2017
         ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
         
         cf_level_fss<-dc_method[,4]+ki_type[,4]
-      
+        cf_level_fss[is.nan(cf_level_fss)]<-NA
+        
       #-Health
         dc_method<-as.data.frame(data[,c("Q_5/Q_5k_1/Q_5k_1_c","Q_5/Q_5k_2/Q_5k_2_c","Q_5/Q_5k_3/Q_5k_3_c")])
         dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
@@ -93,7 +99,8 @@ Last modified: 6 Aug 2017
         ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
         
         cf_level_health<-dc_method[,4]+ki_type[,4]
-      
+        cf_level_health[is.nan(cf_level_health)]<-NA
+          
       #-NFI-Shelter
         dc_method<-as.data.frame(data[,c("Q_6/Q_6k_1/Q_6_group_1/Q_6_group_2/Q_6k_1_c","Q_6/Q_6k_1/Q_6_group_4/Q_6_group_5/Q_6k_2_c","Q_6/Q_6k_1/Q_6_group_7/Q_6_group_8/Q_6k_3_c")])
         dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
@@ -105,7 +112,9 @@ Last modified: 6 Aug 2017
         ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
         
         cf_level_nfishelter<-dc_method[,4]+ki_type[,4]
-      
+        cf_level_nfishelter[is.nan(cf_level_nfishelter)]<-NA
+        
+        
       #Protection
         dc_method<-as.data.frame(data[,c("Q_7/Q_7k_1/Q_7k_1_c","Q_7/Q_7k_2/Q_7k_2_c","Q_7/Q_7k_3/Q_7k_3_c")])
         dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
@@ -117,7 +126,8 @@ Last modified: 6 Aug 2017
         ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
         
         cf_level_prot<-dc_method[,4]+ki_type[,4]
-      
+        cf_level_prot[is.nan(cf_level_prot)]<-NA
+        
       #ERL
         dc_method<-as.data.frame(data[,c("Q_8/Q_8k_1/Q_8k_1_c","Q_8/Q_8k_2_1/Q_8k_2_c","Q_8/Q_8k_2_1/Q_8k_3_1/Q_8k_3_c")])
         dc_method<-ifelse(dc_method[,1:3]=="Face to face",3,ifelse(dc_method[,1:3]=="Remote",1,NA))
@@ -129,13 +139,12 @@ Last modified: 6 Aug 2017
         ki_type<-cbind(ki_type,ki_type_score=rowMeans(ki_type[,1:3],na.rm = TRUE))
         
         cf_level_erl<-dc_method[,4]+ki_type[,4]
-      
+        cf_level_erl[is.nan(cf_level_erl)]<-NA
       #Geographic level for aggregation
-      agg_pcode<-ifelse(is.na(data[,c("Q_M/Q_M5")]),data[,c("admin4pcode")],data[,c("neighpcode")])
-      data_level<-ifelse(is.na(data[,c("Q_M/Q_M5")]),"Community","Neighbourhood")
+      #agg_pcode<-ifelse(is.na(data[,c("Q_M/Q_M5")]),data[,c("admin4pcode")],data[,c("neighpcode")])
+      #data_level<-ifelse(is.na(data[,c("Q_M/Q_M5")]),"Community","Neighbourhood")
       
       data<-cbind(
-        agg_pcode,
         cf_level_is,
         cf_level_cccm,
         cf_level_edu,
@@ -144,7 +153,6 @@ Last modified: 6 Aug 2017
         cf_level_nfishelter,
         cf_level_prot,
         cf_level_erl,
-        data_level,
         data
       )
       write_csv(data,gsub(".xlsx","_S1_Step02_CL.csv",data_fname),na='NA')
@@ -153,10 +161,9 @@ Last modified: 6 Aug 2017
       agg_method_all<-as.data.frame(filter(survey, type!="begin_group", type!="note",type!="end_group"))
       choices<-dico
     
-      
       #data
       db_all<-data
-      
+      agg_geo_colname<-"agg_pcode"      
         #add number of records per agg_geo_level
         d_nr<-db_all %>% 
           group_by_(agg_geo_colname) %>% 
@@ -176,7 +183,7 @@ Last modified: 6 Aug 2017
     db_heading<-names(db)  
   #--AGGREGATION OUTPUT FRAME------------
     #Get unique community list for the aggregation frame
-    agg_geo_colname<-"agg_pcode"
+    
     agg_geo_level<-distinct(as.data.frame(db[,"agg_pcode"]))  
     names(agg_geo_level)[1] <- "agg_pcode"
     
@@ -193,14 +200,19 @@ Last modified: 6 Aug 2017
     db<-assign_ordinal_score_bylabel(db,choices)
     write_csv(db,gsub(".xlsx","_S1_Step04_ORD_RECODING.csv",data_fname),na='NA')
     
+    #Recode 'NA' to NA 
+    for (kl in 1:ncol(db)){
+      db[,kl]<-ifelse(db[,kl]=="NA" | db[,kl]=="" | db[,kl]=="NULL" | is.nan(db[,kl]),NA,db[,kl])
+    }
+    write_csv(db,gsub(".xlsx","_S1_Step04_ORD_RECODING_1.csv",data_fname),na='NA')
     ###############------------------------------------###################
     
     #Loop through each column of the main data
       #-identify question and aggregation type    
-    j<-1 #exclude the first agg_pcode column
+    j<-0 #exclude the first agg_pcode column
     
     while(j<ncol(db))
-    #while(j<1742)
+    #while(j<1100)
     {
       j<-j+1
       #j=21 for testing
@@ -213,7 +225,7 @@ Last modified: 6 Aug 2017
       check<-agg_heading
       
       #if ranking prepare check names
-      if (str_detect(agg_heading,"/RANK3_SCORE") | str_detect(agg_heading,"/RANK4_SCORE")){
+      if (str_detect(agg_heading,"/RANK3_SCORE") | str_detect(agg_heading,"/RANK4_SCORE")|str_detect(agg_heading,"/RANK1_SCORE")){
         #gather group name
         t_p<-str_locate(agg_heading,"/RANK")
         t_str<-substr(agg_heading,1,t_p-1)
@@ -256,7 +268,7 @@ Last modified: 6 Aug 2017
       }
       
       #2. aggregation method if variable is 'key'
-      if(agg_heading=="key"){
+      if(agg_heading=="Key" | agg_heading=="key"){
         i_aggmethod<-"CONCAT"
       }
       #3. aggregation method if variable is admin name column
@@ -280,7 +292,7 @@ Last modified: 6 Aug 2017
         i_aggmethod<-"DONOTHING"
       }
       
-      print(paste0("Running - ",agg_heading, " - Column:",j))
+      print(paste0(nrow(db_agg), " -- ", "Running -- ",agg_heading, " -- Column:",j))
       
       #Confidence level column
        if (sector=="intersector"){
@@ -301,9 +313,7 @@ Last modified: 6 Aug 2017
         cf_level<-cf_level_erl
        }else {cf_level<-rep(1,nrow(db))} 
       
-      
-      
-####---THE AGGREGATION STARTS---####
+      ####---THE AGGREGATION STARTS---####
         #Average (Confidence Level Weighted)
           if (i_aggmethod=="AVG_W"|i_aggmethod=="ORD_1"){
             d<-"a"
@@ -324,6 +334,52 @@ Last modified: 6 Aug 2017
                 #join to the expanding aggregation data
                 db_agg<-left_join(db_agg,d,by=agg_geo_colname)
                 rm(list=c("ldt","d","i_heading","vn_agg"))
+                
+        #round up for ordinal question - done for protection questions
+          }else if (i_aggmethod=="ORD_1_RUP"){
+            d<-"a"
+            vn_agg<-db_heading[j]
+            #prepare confidence level
+            i_cf_level<-conv_num(cf_level)
+            #db[,j]<-recode(db[,j],'NA'=NA)
+            ldt<-na.omit(data.frame(db[,which(names(db)==agg_geo_colname)],i_cf_level,conv_num(db[,j])))
+            ldt$result<-apply(ldt[,2:3], 1, prod)
+            d<-round_up(tapply(ldt$result,ldt[,1],sum)/tapply(conv_num(ldt[,2]),ldt[,1],sum))
+            #d<-tapply(ldt$result,ldt[,1],sum)/tapply(conv_num(ldt[,2]),ldt[,1],sum)
+            d<-data.frame(row.names(d),d)
+            d<-as.data.frame(d)	
+            #d[,2]<-round_up(d[,2])
+            i_heading<-c("agg_pcode",vn_agg)
+            #check if d does not have rows i.e all NA so omitted in previous step, then create empty data frame
+            if(nrow(d)==0){d<-data.frame(x="temp",y=NA)}
+            #
+            names(d)<-i_heading
+            #join to the expanding aggregation data
+            db_agg<-left_join(db_agg,d,by=agg_geo_colname)
+            rm(list=c("ldt","d","i_heading","vn_agg"))
+            
+            
+      #take the worst case scenario for the ordinal answers
+          }else if (i_aggmethod=="ORD_1_WCASE"){
+            d<-"a"
+            vn_agg<-db_heading[j]
+            #prepare confidence level
+            i_cf_level<-conv_num(cf_level)
+            #db[,j]<-recode(db[,j],'NA'=NA)
+            ldt<-na.omit(data.frame(db[,which(names(db)==agg_geo_colname)],i_cf_level,conv_num(db[,j])))
+            ldt$result<-ldt[,3]
+            d<-tapply(ldt$result,ldt[,1],max,na.rm=TRUE)
+            #d<-tapply(ldt$result,ldt[,1],sum)/tapply(conv_num(ldt[,2]),ldt[,1],sum)
+            d<-data.frame(row.names(d),d)
+            d<-as.data.frame(d)	
+            i_heading<-c("agg_pcode",vn_agg)
+            #check if d does not have rows i.e all NA so omitted in previous step, then create empty data frame
+            if(nrow(d)==0){d<-data.frame(x="temp",y=NA)}
+            #
+            names(d)<-i_heading
+            #join to the expanding aggregation data
+            db_agg<-left_join(db_agg,d,by=agg_geo_colname)
+            rm(list=c("ldt","d","i_heading","vn_agg"))
             
         #Average/Mean (no Weighting applied) - for example age of KI or Confidene level score
           }else if (i_aggmethod=="AVG"){
@@ -388,7 +444,7 @@ Last modified: 6 Aug 2017
             rm(list=c("ldt","d","i_heading","vn_agg"))
            
         #RANK questions - RANK3/RANK4
-          }else if (i_aggmethod=="RANK3" | i_aggmethod=="RANK4"){
+          }else if (i_aggmethod=="RANK1" | i_aggmethod=="RANK3" | i_aggmethod=="RANK4"){
             d<-"a"
             vn_agg<-names(db)[j]
             #find rank group
@@ -516,8 +572,6 @@ Last modified: 6 Aug 2017
             rm(list=c("d","i_heading","vn_agg"))
           }
       
-      print(paste0(nrow(db_agg),"---",j)) #For checking - remove at the end
-      
     }#while
    
       write_csv(db_agg,gsub(".xlsx","_AGG_Step01_WITH_SCORE.csv",data_fname),na='NA')  
@@ -570,9 +624,11 @@ Last modified: 6 Aug 2017
        location_aoo_all<-left_join(location,location_aoo_all,by="agg_pcode")
        write_csv(location_aoo_all,gsub(".xlsx","_AGG_Step06_AoO_Location.csv",data_fname),na='NA')
        
-       
-write_csv(db_agg,gsub(".xlsx","_AGG_Step07_FINAL.csv",data_fname),na='NA')
+       #output NA in the result
+       db_agg[is.na(db_agg)] <- 'NA'
 
+write_csv(db_agg,gsub(".xlsx","_AGG_Step07_FINAL.csv",data_fname))
+openxlsx::write.xlsx(db_agg,gsub(".xlsx","_AGG_Step07_FINAL.xlsx",data_fname),sheetName="data",row.names=FALSE)
 print(paste0("Done - ", Sys.time()))    
       
       

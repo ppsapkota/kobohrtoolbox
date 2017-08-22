@@ -5,7 +5,7 @@ Last Modified: 11 July 2017
 -----------------------------------------------'
 
 #merging multiple files in a a folder
-multi_files_merge_csv = function(mypath){
+files_merge_csv = function(mypath){
   #mypath <- datawd_csv
   filenames=list.files(path=mypath, full.names=TRUE, pattern = "*.csv")
   all_files <- lapply(filenames, function(x) {read.csv(x,na="n/a",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)})
@@ -13,10 +13,23 @@ multi_files_merge_csv = function(mypath){
   #returns the merged dataframe
   return(all_files_merged)
 }
+#---------------------------------------------------------#
+files_merge_xlsx = function(mypath){
+  #mypath <- datawd_csv
+  filenames=list.files(path=mypath, full.names=TRUE, pattern = "*.xlsx")
+  all_files <- lapply(filenames, function(x) {read_excel(x,sheet=1,col_types = "text")})
+  all_files_merged <-Reduce(bind_rows,all_files)
+  #returns the merged dataframe
+  return(all_files_merged)
+}
+
+
+
+
 
 #----------Export XLSX2CSV -------------#
 readXLSXwriteCSV<-function(fname){
-  dbc<-read_excel(fname, sheet = 1)
+  dbc<-read_excel(fname, sheet = 1,col_types ="text")
   fname_csv = gsub("\\.xlsx","\\.csv",fname)
   #-----create file path in 'CSV' folder-----
   fname_csv = gsub(basename(fname_csv),paste0("CSV/",basename(fname_csv)),fname_csv)
@@ -30,10 +43,10 @@ readCSVwriteXLSX<-function(fname){
   fname_xlsx = gsub("\\.csv","\\.xlsx",fname)
   #-----create file path in 'CSV' folder-----
   #fname_xlsx = gsub(basename(fname_xlsx),paste0("XLSX/",basename(fname_xlsx)),fname_xlsx)
-  write.xlsx2(dbc,file=fname_xlsx, row.names = FALSE)
+  #write.xlsx2(dbc,file=fname_xlsx, row.names = FALSE)
   
   #--open xlsx--
-  # openxlsx::write.xlsx(x=dbc,file=fname_xlsx)
+   openxlsx::write.xlsx(x=dbc,file=fname_xlsx,sheetName ="data")
    #
    # wb<-openxlsx::createWorkbook()
    # openxlsx::addWorksheet(wb, "data")
@@ -53,6 +66,14 @@ round2 = function(x, n) {
   z*posneg
 }	
 
+#Another rounding function
+round3 <- function(x) {trunc(x+sign(x)*0.5)}
+
+#Always rounding up
+round_up<-function(x){ceiling(x)}
+
+#Always rounding up 2.63 -> 2.7
+# ceiling_dec <- function(x, level=0) {round(x + 5*10^(-level-1), level)}
 
 #function coerce to numbers
 conv_num<-function(x){as.numeric(as.character(x))}

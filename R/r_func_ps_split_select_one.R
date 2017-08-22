@@ -13,7 +13,7 @@ split_select_one_rank<-function(db,choices){
   ##CASE 1 - Select_one
   #-select all the field headers for select one and Rank
   #ch_s1<-choices[choices$aggmethod=="RANK3" | choices$aggmethod=="RANK4" ,]
-  ch_s1<-as.data.frame(filter(choices,aggmethod=="RANK3" | aggmethod=="RANK4"))
+  ch_s1<-as.data.frame(filter(choices,aggmethod=="RANK1" | aggmethod=="RANK3" | aggmethod=="RANK4"))
   #--loop through all the rows or take all value
   ch_s1_headers<-distinct(as.data.frame(ch_s1[,c("qrankgroup","aggmethod")]))
   #names(ch_s1_headers)[1]<-"qrankgroup"
@@ -34,7 +34,7 @@ split_select_one_rank<-function(db,choices){
     off<-0
     #ifelse is required to check non matching and if any variable is not in the lookup table, it will be retained as is
     for (i_lt in 1:nrow(ch_s1_lookup)){
-      #i_lt=1
+      #i_lt=26
       vn<-ch_s1_lookup$gname[i_lt]
       vn_group<-ch_s1_lookup$qrankgroup[i_lt]
       
@@ -55,10 +55,11 @@ split_select_one_rank<-function(db,choices){
       vn_qrankscore<-ch_s1_lookup$qrankscore[i_lt]
       vn_labelchoice<-ch_s1_lookup$labelchoice[i_lt]
       d_ind<-which(names(db_rec)==vn_gname)
-      db_rec[,ch_ind]<-ifelse(db_rec[,d_ind]==vn_labelchoice,vn_qrankscore,db_rec[,ch_ind])
+      #
+      db_rec[,ch_ind]<-ifelse(db_rec[,d_ind]==vn_labelchoice & !is.na(db_rec[,d_ind]),vn_qrankscore,db_rec[,ch_ind])
     }
   }
-  write_csv(db_rec,gsub(".xlsx","_RANK_SPLIT_CHECKS.csv",data_fname),na='NA')
+  #write_csv(db_rec,gsub(".xlsx","_RANK_SPLIT_CHECKS.csv",data_fname),na='NA')
   print(paste0("Split select_one questions for Ranking: DONE", Sys.time()))
   return(db_rec)
 }

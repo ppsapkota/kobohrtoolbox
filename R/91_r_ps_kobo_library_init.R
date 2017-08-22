@@ -8,7 +8,7 @@ library(readxl) #read excel file
 library(dplyr)
 library(ggplot2)
 library(rgdal)
-library(xlsx) #write.xlsx2
+#library(xlsx) #write.xlsx2
 library(openxlsx) #'write xlsx'
 #library(XLConnect) #for big file to write
 
@@ -33,6 +33,12 @@ source("./R/r_func_ps_recode_metadata_odk.R")
 source("./R/r_func_ps_split_select_one.R")
 source("./R/r_func_ps_select_multiple_score2zo.R")
 source("./R/r_func_ps_recode_ordinal_odk.R")
+source("./R/r_func_ps_area_of_origin_location.R")
 
 path <- Sys.getenv("PATH")
 Sys.setenv("PATH" = paste(path, "C:/Rtools/bin", sep = ";"))
+
+tempfile(tmpdir="C:/Users/PSAPKOTA/Documents/R/TempData")
+
+
+
