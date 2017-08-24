@@ -6,13 +6,18 @@ Last modified: 20 Aug 2017
 
 #-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
 ##-----data preparation---------
-      data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
+      #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
+      data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1035hrs.xlsx"
+      
+      
       print(paste0("Reading data file - ", Sys.time())) 
       data<-read_excel(data_fname,col_types ="text",na='NA')
       #data<-read.csv(data_fname,na="NA",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)
       data<-as.data.frame(data)
       #read data file to recode
       nameodk<-"./xlsform/kobo_master_v7_agg_method.xlsx"
+      
+      #nameodk<-"./xlsform/kobo_master_v7_protection_wcase_agg_method.xlsx"
       #read ODK file choices and survey sheet
       survey<-read_excel(nameodk,sheet = "survey",col_types = "text")  
       dico<-read_excel(nameodk,sheet="choices",col_types ="text")
@@ -171,15 +176,23 @@ Last modified: 20 Aug 2017
           ungroup()
         
       db_all<-left_join(db_all,d_nr,by=agg_geo_colname) 
-      write_csv(db_all,gsub(".xlsx","_S1_Step03_COUNT_DUPLICATE.csv",data_fname),na='NA')  
+      write_csv(db_all,gsub(".xlsx","_S1_Step03_COUNT_DUPLICATE.csv",data_fname))  
       
-    #********A step can be incorporated here******************
-    #separate db_dupl with duplicate records
-    #separate db_no_dupl
-    #db<-db_dupl and run the aggregation process for communities where more than one records are submitted
-    #merge data (db_agg and db_no_dupl) in later stage
+      
+      
+    # #********A step can be incorporated here******************
+    # #separate db_dupl with duplicate records
+    # #separate db_no_dupl
+    # #db<-db_dupl and run the aggregation process for communities where more than one records are submitted
+    #   db_dupl<-filter(db_all,num_record>1)
+    #   db_no_dupl<-filter(db_all,num_record==1)  
+    #   write_csv(db_dupl,gsub(".xlsx","_S1_Step03_1_DUPLICATE_RECORDS.csv",data_fname))  
+    #   write_csv(db_no_dupl,gsub(".xlsx","_S1_Step03_2_NO_DUPLICATE_RECORDS.csv",data_fname))  
+    # #merge data (db_agg and db_no_dupl) in later stage
+    #   db<-db_dupl 
+    
     db<-db_all
-      
+    
     db_heading<-names(db)  
   #--AGGREGATION OUTPUT FRAME------------
     #Get unique community list for the aggregation frame
@@ -212,7 +225,7 @@ Last modified: 20 Aug 2017
     j<-0 #exclude the first agg_pcode column
     
     while(j<ncol(db))
-    #while(j<1100)
+    #while(j<100)
     {
       j<-j+1
       #j=21 for testing
@@ -296,21 +309,21 @@ Last modified: 20 Aug 2017
       
       #Confidence level column
        if (sector=="intersector"){
-        cf_level<-cf_level_is
+        cf_level<-db[["cf_level_is"]]
        }else if (sector=="cccm"){
-         cf_level<-cf_level_cccm
+         cf_level<-db[["cf_level_cccm"]]
        }else if (sector=="education"){
-         cf_level<-cf_level_edu
+         cf_level<-db[["cf_level_edu"]]
        }else if (sector=="fss"){
-         cf_level<-cf_level_fss
+         cf_level<-db[["cf_level_fss"]]
        }else if (sector=="health"){
-         cf_level<-cf_level_health
+         cf_level<-db[["cf_level_health"]]
        }else if (sector=="nfishelter"){
-         cf_level<-cf_level_nfishelter
+         cf_level<-db[["cf_level_nfishelter"]]
        }else if (sector=="protection"){
-         cf_level<-cf_level_prot
+         cf_level<-db[["cf_level_prot"]]
        }else if (sector=="erl"){
-        cf_level<-cf_level_erl
+        cf_level<-db[["cf_level_erl"]]
        }else {cf_level<-rep(1,nrow(db))} 
       
       ####---THE AGGREGATION STARTS---####
@@ -488,9 +501,29 @@ Last modified: 20 Aug 2017
             #write.csv(ldt,"./data/data_final/sel1_rank00_ldt.csv")
 
             ldt<-ldt %>% group_by_(agg_geo_colname,as.name(vn_agg))%>%
-                       summarise(cf_level=sum(cf_level,na.rm=TRUE)) %>%
+                         summarise(cf_level=sum(cf_level,na.rm=TRUE)) %>%
                         ungroup()
-
+            
+            #remove no answer or do not know from the list
+            ldt_count<-ldt %>% group_by_(agg_geo_colname)%>%
+                        summarise(n_record=n()) %>%
+                        ungroup()
+            
+            ldt<-left_join(ldt,ldt_count,by=agg_geo_colname)
+            #write_csv(ldt,"ldt_a.csv")
+            ldt<-as.data.frame(ldt)
+            #if count more than one and values are do not know or no answer -> change it to NA
+            ldt[,2]<-ifelse(ldt[,4]>1 & (ldt[,2]=="No answer" |
+                                          ldt[,2]=="dont know/no answer"|
+                                          ldt[,2]=="Dont know / Unsure"|
+                                          ldt[,2]=="Dont know / Unsure"|
+                                            ldt[,2]=="Dont know"|
+                                            ldt[,2]=="Don’t know/Unsure"|
+                                            ldt[,2]=="Don’t know"|
+                                            ldt[,2]=="don't know"|
+                                            ldt[,2]=="Do not know/Unsure"),NA,ldt[,2])
+            ldt<-na.omit(ldt)
+            #write_csv(ldt,"ldt_b.csv")
             # d<-ldt %>% group_by_(agg_geo_colname)%>%
             #   mutate(rank=rank(-cf_level,ties.method = 'min')) %>%
             #   ungroup()
@@ -510,7 +543,78 @@ Last modified: 20 Aug 2017
             rm(list=c("ldt","d","i_heading","vn_agg"))
 
             #write_csv(db_agg,paste0(j,".csv"),na='NA')
+         
+      #SELECT ONE - special case for protection sector request
+            # For questions which have Yes, No and Sometimes
+            # If only one category is chosen by all the KI s , take that category.
+            # If more than one category is chosen by any number of the KIs , take ‘Sometimes’ 
+
+            }else if(i_aggmethod=="SEL_1_UQ"){
+              
+              d<-"a"
+              vn_agg<-names(db)[j]
+              i_cf_level<-conv_num(cf_level)
+              ldt<- na.omit(data.frame(db[,which(names(db)==agg_geo_colname)],db[,j],i_cf_level))
+              
+              i_heading<-c(agg_geo_colname,vn_agg,"cf_level")
+              if(nrow(ldt)==0){ldt<-data.frame(x="temp",y=NA,z=NA)}
+              names(ldt)<-i_heading
+              
+              ldt<-ldt %>% group_by_(agg_geo_colname,as.name(vn_agg))%>%
+                summarise(cf_level=sum(cf_level,na.rm=TRUE)) %>%
+                ungroup()
+              
+              #remove no answer or do not know from the list
+              ldt_count<-ldt %>% group_by_(agg_geo_colname)%>%
+                summarise(n_record=n()) %>%
+                ungroup()
+              
+              ldt<-left_join(ldt,ldt_count,by=agg_geo_colname)
+              
+              #write_csv(ldt,"./Data/100_Aggregation/sel1_uq_ldt_1.csv")
+              #write_csv(ldt,"ldt_a.csv")
+              ldt<-as.data.frame(ldt)
+              #if count more than one and values are do not know or no answer -> change it to NA
+              ldt[,2]<-ifelse(ldt[,4]>1 & (ldt[,2]=="No answer" |
+                                             ldt[,2]=="dont know/no answer"|
+                                             ldt[,2]=="Dont know / Unsure"|
+                                             ldt[,2]=="Dont know / Unsure"|
+                                             ldt[,2]=="Dont know"|
+                                             ldt[,2]=="Don’t know/Unsure"|
+                                             ldt[,2]=="Don’t know"|
+                                             ldt[,2]=="don't know"|
+                                             ldt[,2]=="Do not know/Unsure"|
+                                             ldt[,2]=="dont know"),NA,ldt[,2])
+              ldt<-na.omit(ldt)
+              
+              #count again after removing
+              #remove no answer or do not know from the list
+              ldt_count<-ldt %>% group_by_(agg_geo_colname)%>%
+                            summarise(n_record=n()) %>%
+                            ungroup()
+              ldt<-left_join(ldt[1:3],ldt_count,by=agg_geo_colname)
+              #if more than two records -replace by sometimes
+              ldt<-as.data.frame(ldt)
+              ldt[,2]<-ifelse(ldt[,4]>1,"sometimes",ldt[,2])
+              ldt<-unique(ldt[,1:3])
+              #write_csv(ldt,"./Data/100_Aggregation/sel1_uq_ldt_2.csv")
+              #write_csv(ldt,"ldt_b.csv")
+              
+              ldt<-as.data.table(ldt)
+              d<-ldt[,rank:=rank(-cf_level,ties.method = 'min'), by = agg_pcode]
+              #now select rank 1 only
+              d<-as.data.table(filter(d,rank==1))
+              d[,n_samerank := .N, by = agg_pcode]
+              #change to no_consensus if two rows are ranked same
+              d[d$n_samerank > 1,2]<-"No_Consensus"
+              #Get UNIQUE here
+              d<-unique(d[,1:2])
+              db_agg<-left_join(db_agg,d,by=agg_geo_colname)
+              rm(list=c("ldt","d","i_heading","vn_agg"))
+              
+              #write_csv(db_agg,paste0(j,".csv"),na='NA')
             
+               
         #SELECT multiple
           }else if (i_aggmethod=="SEL_ALL" | i_aggmethod=="SEL_3" | i_aggmethod=="SEL_4"){
             d<-"a"
@@ -598,6 +702,14 @@ Last modified: 20 Aug 2017
       write_csv(db_agg,gsub(".xlsx","_AGG_Step04_SEL3.csv",data_fname),na='NA')
       
     ###############--------------------------------------------------###################
+      #merge here before recoding ranks
+      # db_no_dupl<-sapply(db_no_dupl,as.character)
+      # db_no_dupl<-data.frame(db_no_dupl,stringsAsFactors=FALSE,check.names=FALSE)  
+      # #
+      # db_agg<-sapply(db_agg,as.character)
+      # db_agg<-data.frame(db_agg,stringsAsFactors=FALSE,check.names=FALSE)   
+      # #
+      # db_agg<-bind_rows(db_agg,db_no_dupl)
     
     ###############--------RANK SCORE TO 0/1------------###################
        db_agg<-select_rank_score2rank(db_agg,agg_method_all)
@@ -624,9 +736,20 @@ Last modified: 20 Aug 2017
        location_aoo_all<-left_join(location,location_aoo_all,by="agg_pcode")
        write_csv(location_aoo_all,gsub(".xlsx","_AGG_Step06_AoO_Location.csv",data_fname),na='NA')
        
+       print(paste0("Some clean up - ", Sys.time())) 
        #output NA in the result
        db_agg[is.na(db_agg)] <- 'NA'
-
+       # 
+       # #Q_4/Q_4_9/Q_4_9_1_1	;	Q_4/Q_4_9/Q_4_9_2_1
+       # db_agg[,which(names(db_agg)=="Q_4/Q_4_9/Q_4_9_1_1")]<-"NA"
+       # db_agg[,which(names(db_agg)=="Q_4/Q_4_9/Q_4_9_2_1")]<-"NA"
+       
+       #some cleanup
+       for (kl in 1:ncol(db_agg)){
+         db_agg[,kl]<-ifelse(db_agg[,kl]==""|is.na(db_agg[,kl])|is.nan(db_agg[,kl]),"NA",db_agg[,kl])
+       }
+       print(paste0("Writing final results - ", Sys.time())) 
+       
 write_csv(db_agg,gsub(".xlsx","_AGG_Step07_FINAL.csv",data_fname))
 openxlsx::write.xlsx(db_agg,gsub(".xlsx","_AGG_Step07_FINAL.xlsx",data_fname),sheetName="data",row.names=FALSE)
 print(paste0("Done - ", Sys.time()))    
