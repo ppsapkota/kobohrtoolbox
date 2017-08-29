@@ -1,13 +1,13 @@
 '----
 Developed by: Punya Prasad Sapkota
 Reference: Tool developed by Olivier/REACH
-Last modified: 20 Aug 2017
+Last modified: 24 Aug 2017
 ----'
 
 #-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
 ##-----data preparation---------
       #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
-      data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1035hrs.xlsx"
+      data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs.xlsx"
       
       
       print(paste0("Reading data file - ", Sys.time())) 
@@ -15,9 +15,9 @@ Last modified: 20 Aug 2017
       #data<-read.csv(data_fname,na="NA",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)
       data<-as.data.frame(data)
       #read data file to recode
-      nameodk<-"./xlsform/kobo_master_v7_agg_method.xlsx"
+      #nameodk<-"./xlsform/kobo_master_v7_agg_method.xlsx"
       
-      #nameodk<-"./xlsform/kobo_master_v7_protection_wcase_agg_method.xlsx"
+      nameodk<-"./xlsform/kobo_master_v7_protection_wcase_agg_method.xlsx"
       #read ODK file choices and survey sheet
       survey<-read_excel(nameodk,sheet = "survey",col_types = "text")  
       dico<-read_excel(nameodk,sheet="choices",col_types ="text")
@@ -33,6 +33,12 @@ Last modified: 20 Aug 2017
       # for (kl in 1:ncol(data)){
       #   data[,kl]<-ifelse(data[,kl]=="NULL",NA,data[,kl])
       # }
+      
+#############---------PROTECTION-------ALL-MEN-WOMEN##############
+      data<-protection_gender_all_transfer(data,survey)
+      write_csv(data,gsub(".xlsx","_S1_Step00_ALL_TRANSFER.csv",data_fname))
+      openxlsx::write.xlsx(data,gsub(".xlsx","_S1_Step00_ALL_TRANSFER.xlsx",data_fname),sheetName="data",row.names=FALSE)
+      
 ###############--------SPLIT RANK SELECT ONE TO MULTIPLE------------###################
       data<-split_select_one_rank(data,dico)
       write_csv(data,gsub(".xlsx","_S1_Step01_SPLIT_RANK.csv",data_fname),na='NA')
@@ -219,6 +225,9 @@ Last modified: 20 Aug 2017
     }
     write_csv(db,gsub(".xlsx","_S1_Step04_ORD_RECODING_1.csv",data_fname),na='NA')
     ###############------------------------------------###################
+    
+    
+    
     
     #Loop through each column of the main data
       #-identify question and aggregation type    

@@ -166,7 +166,7 @@ kobo_dico <- function(form_file_name) {
   
   
   ## Pick only selected columns without names
-  survey <- survey[ ,c("type",   "name" ,  "label", "qtype","listname","qlevel","recodevar","aggmethod","qrankscore","qrankgroup","sector", "gname", "gname_label"
+  survey <- survey[ ,c("type",   "name" ,  "label", "qtype","listname","qlevel","recodevar","aggmethod","qrankscore","qrankgroup","sector","group", "gname", "gname_label"
                        #"repeatsummarize","variable","disaggregation",  "chapter", "sensitive","anonymise","correlate"
                        # "indicator","indicatorgroup","indicatortype",
                        # "indicatorlevel","dataexternal","indicatorcalculation","indicatornormalisation"
