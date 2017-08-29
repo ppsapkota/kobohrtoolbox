@@ -7,7 +7,7 @@ Last modified: 24 Aug 2017
 #-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
 ##-----data preparation---------
       #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
-      data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs.xlsx"
+      data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs_all_corrected_v2.xlsx"
       
       
       print(paste0("Reading data file - ", Sys.time())) 
@@ -15,9 +15,9 @@ Last modified: 24 Aug 2017
       #data<-read.csv(data_fname,na="NA",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)
       data<-as.data.frame(data)
       #read data file to recode
-      #nameodk<-"./xlsform/kobo_master_v7_agg_method.xlsx"
+      nameodk<-"./xlsform/kobo_master_v7_agg_method.xlsx"
       
-      nameodk<-"./xlsform/kobo_master_v7_protection_wcase_agg_method.xlsx"
+      #nameodk<-"./xlsform/kobo_master_v7_protection_wcase_agg_method.xlsx"
       #read ODK file choices and survey sheet
       survey<-read_excel(nameodk,sheet = "survey",col_types = "text")  
       dico<-read_excel(nameodk,sheet="choices",col_types ="text")
@@ -35,9 +35,9 @@ Last modified: 24 Aug 2017
       # }
       
 #############---------PROTECTION-------ALL-MEN-WOMEN##############
-      data<-protection_gender_all_transfer(data,survey)
-      write_csv(data,gsub(".xlsx","_S1_Step00_ALL_TRANSFER.csv",data_fname))
-      openxlsx::write.xlsx(data,gsub(".xlsx","_S1_Step00_ALL_TRANSFER.xlsx",data_fname),sheetName="data",row.names=FALSE)
+      # data<-protection_gender_all_transfer(data,survey)
+      # write_csv(data,gsub(".xlsx","_S1_Step00_ALL_TRANSFER.csv",data_fname))
+      # openxlsx::write.xlsx(data,gsub(".xlsx","_S1_Step00_ALL_TRANSFER.xlsx",data_fname),sheetName="data",row.names=FALSE)
       
 ###############--------SPLIT RANK SELECT ONE TO MULTIPLE------------###################
       data<-split_select_one_rank(data,dico)
@@ -234,7 +234,7 @@ Last modified: 24 Aug 2017
     j<-0 #exclude the first agg_pcode column
     
     while(j<ncol(db))
-    #while(j<100)
+    #while(j<1500)
     {
       j<-j+1
       #j=21 for testing
