@@ -112,3 +112,7 @@ NULL
 
 
 
+# df %>%
+#   group_by(group) %>%
+#   summarise(text=paste(text,collapse=''))
+

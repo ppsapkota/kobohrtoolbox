@@ -39,6 +39,20 @@ kobohr_count_submission <-function(url,u,pw){
   d_count_submission <- d_content$count
 }
 
+#---Upload form in KoBo toolbox--------
+#curl -X POST -F xls_file=@/path/to/form.xls https://kobo.humanitarianresponse.info/api/v1/forms
+#POST(url, body = upload_file("mypath.txt"))
+#USAGE: kobo_form_xlsx="./xlsform/kobo_1701_NW.xlsx"
+#url = "https://kc.humanitarianresponse.info/api/v1/forms"
+kobohr_upload_xls_form <-function(url,kobo_xls_form,u,pw){
+  result<-httr::POST (url,
+                      body=list(
+                        xls_file=upload_file(path=kobo_xls_form)),
+                      authenticate(u,pw))
+ result<-result
+  }
+
+
 #downlod data in CSV format
 #---Parameters
 #-----formid <- 145533

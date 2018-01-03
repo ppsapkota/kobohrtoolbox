@@ -28,35 +28,36 @@ split_select_one_rank<-function(db,choices){
     ch_s1_lookup<-as.data.frame(filter(ch_s1,qrankgroup==i_vn_group))
     #column index from the data
     col_ind<-which(str_detect(names(db_rec),i_vn_group)%in%TRUE)
-    last_col<-col_ind[length(col_ind)] # where to start adding new columns
-    
-    #loop through lookup table - which will be fewer rows to manage
-    off<-0
-    #ifelse is required to check non matching and if any variable is not in the lookup table, it will be retained as is
-    for (i_lt in 1:nrow(ch_s1_lookup)){
-      #i_lt=26
-      vn<-ch_s1_lookup$gname[i_lt]
-      vn_group<-ch_s1_lookup$qrankgroup[i_lt]
-      
-      vn_rank<-paste0(vn_group,"/",i_aggmethod,"_SCORE/",ch_s1_lookup$labelchoice_clean[i_lt])
-      vn_ind<-last_col+off
-      #check variable name in the main data
-      ch_ind<-which(names(db_rec)==vn_rank)
-      #if does not already exist add
-      if (length(ch_ind)==0){
-        db_rec<-data.frame(append(db_rec, vn_rank, after =  vn_ind),check.names=FALSE,stringsAsFactors=F)
-        ch_ind<-vn_ind+1
-        db_rec[,ch_ind]<-NA
-        names(db_rec)[ch_ind]<-gsub("\"","",names(db_rec)[ch_ind])
-        off<-off+1
-      }
-      #now assign rank score 3,2,1
-      vn_gname<-ch_s1_lookup$gname[i_lt]
-      vn_qrankscore<-ch_s1_lookup$qrankscore[i_lt]
-      vn_labelchoice<-ch_s1_lookup$labelchoice[i_lt]
-      d_ind<-which(names(db_rec)==vn_gname)
-      #
-      db_rec[,ch_ind]<-ifelse(db_rec[,d_ind]==vn_labelchoice & !is.na(db_rec[,d_ind]),vn_qrankscore,db_rec[,ch_ind])
+    if(length(col_ind)>0){
+          last_col<-col_ind[length(col_ind)] # where to start adding new columns
+          #loop through lookup table - which will be fewer rows to manage
+          off<-0
+          #ifelse is required to check non matching and if any variable is not in the lookup table, it will be retained as is
+          for (i_lt in 1:nrow(ch_s1_lookup)){
+            #i_lt=26
+            vn<-ch_s1_lookup$gname[i_lt]
+            vn_group<-ch_s1_lookup$qrankgroup[i_lt]
+            
+            vn_rank<-paste0(vn_group,"/",i_aggmethod,"_SCORE/",ch_s1_lookup$labelchoice_clean[i_lt])
+            vn_ind<-last_col+off
+            #check variable name in the main data
+            ch_ind<-which(names(db_rec)==vn_rank)
+            #if does not already exist add
+            if (length(ch_ind)==0){
+              db_rec<-data.frame(append(db_rec, vn_rank, after =  vn_ind),check.names=FALSE,stringsAsFactors=F)
+              ch_ind<-vn_ind+1
+              db_rec[,ch_ind]<-NA
+              names(db_rec)[ch_ind]<-gsub("\"","",names(db_rec)[ch_ind])
+              off<-off+1
+            }
+            #now assign rank score 3,2,1
+            vn_gname<-ch_s1_lookup$gname[i_lt]
+            vn_qrankscore<-ch_s1_lookup$qrankscore[i_lt]
+            vn_labelchoice<-ch_s1_lookup$labelchoice[i_lt]
+            d_ind<-which(names(db_rec)==vn_gname)
+            #
+            db_rec[,ch_ind]<-ifelse(db_rec[,d_ind]==vn_labelchoice & !is.na(db_rec[,d_ind]),vn_qrankscore,db_rec[,ch_ind])
+          }
     }
   }
   #write_csv(db_rec,gsub(".xlsx","_RANK_SPLIT_CHECKS.csv",data_fname),na='NA')
