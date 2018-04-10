@@ -1,6 +1,6 @@
 
+rm(list=ls())
 source("./R/91_r_ps_kobo_library_init.R")
-
 d_path = "./data/200_Displacement_Tracking"
 f_file = "Displacement_Reporting_2018-04-09-09-01-30.xlsx"
 s_file = gsub(".xlsx","_for_analysis.xlsx",f_file)
