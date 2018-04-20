@@ -1,21 +1,26 @@
 
 source ("./R/91_r_ps_kobo_library_init.R")
-source ("./R/r_ps_kobo_authenticate.R")
+source ("./R/r_ps_kobo_authenticate.R") ###--not uploaded in Githib - instead set Kobo_user and kobo_pw
+source ("./R/r_func_ps_kobo_utils.R")
+
+## SET KoBO user name and password
+kobo_user<- ""
+Kobo_pw<-""
+
 #upload KoBo form
 #curl -X POST -F xls_file=@/path/to/form.xls https://kobo.humanitarianresponse.info/api/v1/forms
 #POST(url, body = upload_file("mypath.txt"))
 #kobohr_upload_xls_form <-function(url,kobo_xls_form,u,pw){
 kobo_form_xlsx<-"./xlsform/kobo_1701_NW.xlsx"
 url <- "https://kc.humanitarianresponse.info/api/v1/forms"
-#url <- "https://kobo.humanitarianresponse.info/imports/"
+url_kpi <- "https://kobo.humanitarianresponse.info/imports/"
 
 # result<-httr::POST (url,
 #             body=list(
 #               xls_file=upload_file(path=kobo_form_xlsx, type="xls")),
 #             authenticate(kobo_user,Kobo_pw))
-
+#---Uploads form to the KC (legacy interface)
 result<-kobohr_upload_xls_form(url,kobo_form_xlsx,kobo_user,Kobo_pw)
-
 status_code <- result$status_code
 ##----------------------
 if (status_code==201){
@@ -32,12 +37,12 @@ if (status_code==201){
   kb_url_asset <- "https://kobo.humanitarianresponse.info/assets/"
   kb_url_asset <- paste0(kb_url_asset,form_uuid,"/")
   
-  #---------------
+  #-------------------------------
   kb_url_json <- paste0("https://kc.humanitarianresponse.info/api/v1/forms/",form_id,"/form.json")
   kb_url_share <- paste0("https://kc.humanitarianresponse.info/api/v1/forms/",form_id,"/share")
   
 }
-###---------CREATE Projects----------
+###---------CREATE Projects----WORKING------
 prj_owner <- list(name="project punya", owner="https://kc.humanitarianresponse.info/api/v1/users/punya")
 prj_url <-"https://kc.humanitarianresponse.info/api/v1/projects"
 
@@ -54,7 +59,7 @@ result<-GET(url,authenticate(kobo_user,Kobo_pw),progress())
 d_content <- rawToChar(result$content)
 d_content <- fromJSON(d_content)
 
-#------------ASSIGN A FORM TO PROJECT---------------------
+#------------ASSIGN A FORM TO THE PROJECT---------------------
 #curl -X POST -d '{"formid": 28058}' https://kc.kobotoolbox.org/api/v1/projects/1/forms -H "Content-Type: application/json"
 prj_id <-d_content$projectid[2]
 prj_url <- paste0("https://kc.humanitarianresponse.info/api/v1/projects/",prj_id,"/forms")
@@ -83,20 +88,24 @@ result<-httr::GET (url,
 d_content <- rawToChar(result$content)
 d_content <- fromJSON(d_content)
 
+
+
+###################---KPI--------#########################################
 ####------------------ASSETS IMPORT------------
 kobo_form_xlsx<-"./xlsform/kobo_1701_NW.xlsx"
-kb_url_import <- "https://kobo.humanitarianresponse.info/imports/"
-d <- list(xls_file=upload_file(path=kobo_form_xlsx, type="xls"))
-result<-httr::POST (kb_url_import,
-                    body=d,
+kb_url <- "https://kobo.humanitarianresponse.info/imports/"
+result<-httr::POST (kb_url,
+                    body=list(
+                      xls_file=upload_file(path=kobo_form_xlsx)),
                     authenticate(kobo_user,Kobo_pw)
 )
 d_content <- rawToChar(result$content)
 d_content <- fromJSON(d_content)
 
 
-
-
+result<-kobohr_upload_xls_form(url_kpi,kobo_form_xlsx,kobo_user,Kobo_pw)
+d_content <- rawToChar(result$content)
+d_content <- fromJSON(d_content)
 ###-----------ASSETS DEPLOYMENT WORKING-----------
 url <-paste0("https://kobo.humanitarianresponse.info/assets/aVJ3qxffPCPttQ79stbdNL/","deployment/")
 d <- list(owner='https://kobo.humanitarianresponse.info/users/punya/')
@@ -107,7 +116,7 @@ result<-httr::POST (url,
 d_content <- rawToChar(result$content)
 d_content <- fromJSON(d_content)
 
-###-------------------------GET ASSETS JASON--------------------------------------####
+###-------------------------GET ASSETS JSON--------------------------------------####
 url <-("https://kobo.humanitarianresponse.info/assets/aVJ3qxffPCPttQ79stbdNL/")
 d <- list(owner='https://kobo.humanitarianresponse.info/users/punya/')
 result<-httr::GET (url,

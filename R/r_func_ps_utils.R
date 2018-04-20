@@ -7,7 +7,7 @@ Last Modified: 11 July 2017
 #merging multiple files in a a folder
 files_merge_csv = function(mypath){
   #mypath <- datawd_csv
-  filenames=list.files(path=mypath, full.names=TRUE, pattern = "*.csv")
+  filenames=list.files(path=mypath, full.names=TRUE, pattern = "*.csv|*.CSV")
   all_files <- lapply(filenames, function(x) {read.csv(x,na="n/a",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)})
   all_files_merged <-Reduce(bind_rows,all_files)
   #returns the merged dataframe
@@ -16,15 +16,12 @@ files_merge_csv = function(mypath){
 #---------------------------------------------------------#
 files_merge_xlsx = function(mypath){
   #mypath <- datawd_csv
-  filenames=list.files(path=mypath, full.names=TRUE, pattern = "*.xlsx")
+  filenames=list.files(path=mypath, full.names=TRUE, pattern = "*.xlsx|*.XLSX|*.xls|*.XLS")
   all_files <- lapply(filenames, function(x) {read_excel(x,sheet=1,col_types = "text")})
   all_files_merged <-Reduce(bind_rows,all_files)
   #returns the merged dataframe
   return(all_files_merged)
 }
-
-
-
 
 
 #----------Export XLSX2CSV -------------#
