@@ -8,7 +8,7 @@ library(readxl) #read excel file
 library(dplyr)
 library(ggplot2)
 library(rgdal)
-#library(xlsx) #write.xlsx2
+library(xlsx) #write.xlsx2
 library(openxlsx) #'write xlsx'
 #library(XLConnect) #for big file to write
 
@@ -39,7 +39,7 @@ source("./R/r_func_ps_protection_gender_all_transfer.R")
 path <- Sys.getenv("PATH")
 Sys.setenv("PATH" = paste(path, "C:/Rtools/bin", sep = ";"))
 
-tempfile(tmpdir="C:/Users/PSAPKOTA/Documents/R/TempData")
+tempfile(tmpdir="./R/TempData")
 
 
 

@@ -2,15 +2,17 @@
 rm(list=ls())
 source("./R/91_r_ps_kobo_library_init.R")
 d_path = "./data/200_Displacement_Tracking"
-f_file = "Displacement_Reporting_2018-04-09-09-01-30.xlsx"
+f_file = "Displacement_Reporting_2018_05_15_06_46_15.xlsx"
 s_file = gsub(".xlsx","_for_analysis.xlsx",f_file)
+err_file = gsub(".xlsx","_checking_errors.xlsx",f_file)
 d_filename = paste0(d_path,"/",f_file) 
 s_filename = paste0(d_path,"/",s_file)
+err_filename = paste0(d_path,"/",err_file)
 
 ###------SET FILTER DATE---------
 ### All data entered after this date (inclusive)
 ###  will be retained.
-start_date_filter <- as.Date("2018-03-01","%Y-%m-%d")
+start_date_filter <- as.Date("2018-04-01","%Y-%m-%d")
 #
 pcode_fname<-"./data/200_Displacement_Tracking/admin/syr_admin_180131.xlsx"
 #--Read PCODE file--
@@ -96,6 +98,7 @@ d_departure_B3<-d_main_i %>%
                 drop_na_("_index")
 
 #---------------QUALITY CHECK----------------
+wb_err<-openxlsx::createWorkbook()
 #CHECK 1 - If a community has both monthly data and data reported over a priod
 df_data_period<-data.frame(rep_period_code=c(1,2),rep_period_label=c("monthly", "specified_period"))
 chk_d_new_idp_B1<-d_new_idp_B1
@@ -109,9 +112,16 @@ d_chk_data_period <- chk_d_new_idp_B1 %>%
                      group_by(`location/adm4` ,unite, `rep_period/A2`,`new_idp/B1/B1_11`,`new_idp/B1/B1_12`,`new_idp/B1/B1_13`,`new_idp/B1/B1_14`) %>%
                      summarise(nDuplicate = n()) %>% 
                      spread (unite,nDuplicate)
+
 ncol_e <-ncol(d_chk_data_period)
 d_chk_data_period$chk_record_if_more_than_1 <- rowSums(d_chk_data_period[7:ncol_e], na.rm=TRUE)
+d_chk_data_period <- d_chk_data_period %>% filter(chk_record_if_more_than_1>1)
 View(d_chk_data_period)
+
+#
+addWorksheet(wb_err,"reporting_period")
+writeDataTable(wb_err,sheet="reporting_period",x=d_chk_data_period,tableName ="reporting_period")
+
 
 #CHECK 2 - If a community has more than one record for the same community of origin
 d_chk_data_dupRecords <- chk_d_new_idp_B1 %>%
@@ -120,8 +130,11 @@ d_chk_data_dupRecords <- chk_d_new_idp_B1 %>%
                      spread(`rep_period/A2_2`,nDuplicate)
 ncol_e <-ncol(d_chk_data_dupRecords)
 d_chk_data_dupRecords$chk_record_if_more_than_1 <- rowSums(d_chk_data_dupRecords[6:ncol_e], na.rm=TRUE)
-
+d_chk_data_dupRecords <- d_chk_data_dupRecords %>% filter(chk_record_if_more_than_1>1)
 View(d_chk_data_dupRecords)
+#
+addWorksheet(wb_err,"duplicate_communities")
+writeDataTable(wb_err,sheet="duplicate_communities",x=d_chk_data_dupRecords,tableName ="duplicate_communities")
 
 #CHECK 3 - If more than one enumerator entered data or not for the same community
 d_chk_data_dupEnum <- chk_d_new_idp_B1 %>%
@@ -130,8 +143,11 @@ d_chk_data_dupEnum <- chk_d_new_idp_B1 %>%
                       spread(`metadata/X2`,nDuplicate)
 ncol_e <-ncol(d_chk_data_dupEnum)
 d_chk_data_dupEnum$chk_record_if_more_than_1 <- rowSums(d_chk_data_dupEnum[6:ncol_e], na.rm=TRUE)
+d_chk_data_dupEnum <- d_chk_data_dupEnum %>% filter(chk_record_if_more_than_1>1)
 View(d_chk_data_dupEnum)
-
+#
+addWorksheet(wb_err,"duplicate_enumerators")
+writeDataTable(wb_err,sheet="duplicate_enumerators",x=d_chk_data_dupEnum,tableName ="duplicate_enumerators")
 #CHECK 4 - If more than one record for the same location of origin to the same destination community
 d_chk_nRecords_perDestination <-chk_d_new_idp_B1 %>%
                                 group_by(`location/adm4`) %>% 
@@ -140,9 +156,16 @@ d_chk_nRecords_perDestination <-chk_d_new_idp_B1 %>%
 d_chk_data_dupOrigin <- chk_d_new_idp_B1 %>%
                         group_by(`location/adm4`,`new_idp/B1/B1_11`,`new_idp/B1/B1_12`,`new_idp/B1/B1_13`,`new_idp/B1/B1_14`) %>% 
                         summarise(nDuplicate = n()) %>% 
-                        left_join(d_chk_nRecords_perDestination,by=c("location/adm4"))
+                        left_join(d_chk_nRecords_perDestination,by=c("location/adm4")) %>% 
+                        filter(nDuplicate>1)
 View(d_chk_data_dupOrigin)
 
+#
+addWorksheet(wb_err,"duplicate_comm_org_vs_dest")
+writeDataTable(wb_err,sheet="duplicate_comm_org_vs_dest",x=d_chk_data_dupOrigin,tableName ="duplicate_comm_org_vs_dest")
+
+
+openxlsx::saveWorkbook(wb_err,err_filename,overwrite = TRUE)
 
 #--------SAVE file----------
 #---prepare save files---------------
@@ -157,6 +180,7 @@ writeDataTable(wb,sheet="new_idp_B1",x=d_new_idp_B1,tableName ="tbl_new_idp_B1")
 writeDataTable(wb,sheet="returnees_B2",x=d_returnees_B2,tableName ="tbl_returnees_B2")
 writeDataTable(wb,sheet="departure_B3",x=d_departure_B3,tableName ="tbl_departure_B3")
 openxlsx::saveWorkbook(wb,s_filename,overwrite = TRUE)
+
 
 print("----DONE----")
 

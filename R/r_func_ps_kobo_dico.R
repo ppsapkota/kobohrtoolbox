@@ -44,6 +44,8 @@ kobo_dico <- function(form_file_name) {
   cat(" \n Now extracting list name from questions type.\n \n")
   #*split type column - Punya
   survey<-separate(survey,type,into = c("qtype","listname"),sep=" ", remove=FALSE,extra="drop", fill="right")
+  survey$qtype<-str_trim(survey$qtype)
+  survey$listname<-str_trim(survey$listname)
   
   #identify group level begin/end group
   begin_flag<-0
@@ -71,7 +73,7 @@ kobo_dico <- function(form_file_name) {
       #get group header level  
       gr_level<-as.numeric(survey[i,c("qlevel")])
       #print(gr_level)
-      #pass beging group name to a basket in orger of group level
+      #pass beging group name to a basket in order of group level
       if (survey[i,c("qtype")] == "begin_group"){
         kobo_header_group_list[gr_level]<-survey[i,c("name")]
         kobo_header_group_label_list[gr_level]<-survey[i,c("label")]
@@ -91,30 +93,60 @@ kobo_dico <- function(form_file_name) {
       }
   } 
   
-  #------------------------------------------------
+  #---------------Check COL NAMES In SURVEY---------------------------------
   cat("Checking now for additional information within your xlsform. Note that you can insert them in the xls and re-run the function! \n \n ")
+  
+  if("recodevar" %in% colnames(survey))
+  {
+    cat("0- Good: You have a column `recodevar` in your survey worksheet.\n");
+  } else
+  {cat("0- No column `recodevar` in your survey worksheet. Creating a dummy one for the moment...\n");
+    survey$recodevar <- "YES"}
+  
   
   if("aggmethod" %in% colnames(survey))
   {
-    cat("0- Good: You have a column `aggmethod` in your survey worksheet.\n");
+    cat("1- Good: You have a column `aggmethod` in your survey worksheet.\n");
   } else
-  {cat("0- No column `aggmethod` in your survey worksheet. Creating a dummy one for the moment...\n");
+  {cat("1- No column `aggmethod` in your survey worksheet. Creating a dummy one for the moment...\n");
     survey$aggmethod <- ""}
   
   if("qrankscore" %in% colnames(survey))
   {
-    cat("0- Good: You have a column `qrankscore` in your survey worksheet.\n");
+    cat("2- Good: You have a column `qrankscore` in your survey worksheet.\n");
   } else
-  {cat("0- No column `qrankscore` in your survey worksheet. Creating a dummy one for the moment...\n");
+  {cat("2- No column `qrankscore` in your survey worksheet. Creating a dummy one for the moment...\n");
     survey$qrankscore <- ""}
   
-  #------------------------------------
-  if("disaggregation" %in% colnames(survey))
+  if("qrankgroup" %in% colnames(survey))
   {
-    cat("1- Good: You have a column `disaggregation` in your survey worksheet.\n");
+    cat("3- Good: You have a column `qrankgroup` in your survey worksheet.\n");
   } else
-  {cat("1- No column `disaggregation` in your survey worksheet. Creating a dummy one for the moment...\n");
-    survey$disaggregation <- ""}
+  {cat("3- No column `qrankgroup` in your survey worksheet. Creating a dummy one for the moment...\n");
+    survey$qrankgroup <- ""}
+  
+  if("sector" %in% colnames(survey))
+  {
+    cat("4- Good: You have a column `sector` in your survey worksheet.\n");
+  } else
+  {cat("4- No column `sector` in your survey worksheet. Creating a dummy one for the moment...\n");
+    survey$sector <- ""}
+  
+  if("group" %in% colnames(survey))
+  {
+    cat("5- Good: You have a column `group` in your survey worksheet.\n");
+  } else
+  {cat("5- No column `group` in your survey worksheet. Creating a dummy one for the moment...\n");
+    survey$group <- ""}
+  
+  
+  #----------------------------------------------------------------------------------------------
+  # if("disaggregation" %in% colnames(survey))
+  # {
+  #   cat("1- Good: You have a column `disaggregation` in your survey worksheet.\n");
+  # } else
+  # {cat("1- No column `disaggregation` in your survey worksheet. Creating a dummy one for the moment...\n");
+  #   survey$disaggregation <- ""}
   
   
   if("correlate" %in% colnames(survey))
@@ -124,42 +156,42 @@ kobo_dico <- function(form_file_name) {
   {cat("2- No column `correlate` in your survey worksheet. Creating a dummy one for the moment...\n");
     survey$correlate <- ""}
   
-  if("chapter" %in% colnames(survey))
-  {
-    cat("3- Good: You have a column `chapter` in your survey worksheet. This will be used to breakdown the generated report\n");
-  } else
-  {cat("3- No column `chapter` in your survey worksheet. Creating a dummy one for the moment ...\n");
-    survey$chapter <- ""}
-  
-  if("sensitive" %in% colnames(survey))
-  {
-    cat("2- Good: You have a column `sensitive` in your survey worksheet. This will be used to distingusih potentially sensitive questions\n");
-  } else
-  {cat("2- No column `sensitive` in your survey worksheet. Creating a dummy one for the moment filled as `non-sensitive`. Other option is to record as `sensitive`...\n");
-    survey$sensitive <- "non-sensitive"}
-  
-  
-  if("anonymise" %in% colnames(survey))
-  {
-    cat("2- Good: You have a column `anonymise` in your survey worksheet. This will be used to anonymise the dataset.\n");
-  } else
-  {cat("2- No column `anonymise` in your survey worksheet. Creating a dummy one for the moment filled as `non-anonymised`. Other options to record are `Remove`, `Reference`, `Mask`, `Generalise` (see readme file) ...\n");
-    survey$anonymise <- "non-anonymised"}
+  # if("chapter" %in% colnames(survey))
+  # {
+  #   cat("3- Good: You have a column `chapter` in your survey worksheet. This will be used to breakdown the generated report\n");
+  # } else
+  # {cat("3- No column `chapter` in your survey worksheet. Creating a dummy one for the moment ...\n");
+  #   survey$chapter <- ""}
+  # 
+  # if("sensitive" %in% colnames(survey))
+  # {
+  #   cat("2- Good: You have a column `sensitive` in your survey worksheet. This will be used to distingusih potentially sensitive questions\n");
+  # } else
+  # {cat("2- No column `sensitive` in your survey worksheet. Creating a dummy one for the moment filled as `non-sensitive`. Other option is to record as `sensitive`...\n");
+  #   survey$sensitive <- "non-sensitive"}
   
   
-  if("repeatsummarize" %in% colnames(survey))
-  {
-    cat("4- Good: You have a column `repeatsummarize` in your survey worksheet.\n");
-  } else
-  {cat("4- No column `repeatsummarize` in your survey worksheet. Creating a dummy one for the moment...\n");
-    survey$repeatsummarize <- ""}
+  # if("anonymise" %in% colnames(survey))
+  # {
+  #   cat("2- Good: You have a column `anonymise` in your survey worksheet. This will be used to anonymise the dataset.\n");
+  # } else
+  # {cat("2- No column `anonymise` in your survey worksheet. Creating a dummy one for the moment filled as `non-anonymised`. Other options to record are `Remove`, `Reference`, `Mask`, `Generalise` (see readme file) ...\n");
+  #   survey$anonymise <- "non-anonymised"}
   
-  if("variable" %in% colnames(survey))
-  {
-    cat("5- Good: You have a column `variable` in your survey worksheet.\n");
-  } else
-  {cat("5- No column `variable` in your survey worksheet. Creating a dummy one for the moment...\n");
-    survey$variable <- ""}
+  
+  # if("repeatsummarize" %in% colnames(survey))
+  # {
+  #   cat("4- Good: You have a column `repeatsummarize` in your survey worksheet.\n");
+  # } else
+  # {cat("4- No column `repeatsummarize` in your survey worksheet. Creating a dummy one for the moment...\n");
+  #   survey$repeatsummarize <- ""}
+  # 
+  # if("variable" %in% colnames(survey))
+  # {
+  #   cat("5- Good: You have a column `variable` in your survey worksheet.\n");
+  # } else
+  # {cat("5- No column `variable` in your survey worksheet. Creating a dummy one for the moment...\n");
+  #   survey$variable <- ""}
   
   #qraqnkgroup
   #survey$qrankgroup<-ifelse(survey$aggmethod=="RANK3"|survey$aggmethod=="RANK4",str_sub(survey$gname,1,str_length(survey$gname)-2),survey$qrankgroup)
@@ -184,7 +216,17 @@ kobo_dico <- function(form_file_name) {
   choices <- read_excel(form_tmp, sheet = "choices")
   ## Rename the variable label
   #names(survey)[names(survey)=="label::English"] <- "label"
-  choices<- rename(choices,"listnamechoice"="list name","namechoice"="name","labelchoice"="label::English")
+  
+  ###--Check 'list name' or list_name
+  if("list name" %in% colnames(choices))
+  {
+    choices <- rename(choices,"list_name"="list name")
+  } 
+  
+  #-----------
+  choices<- rename(choices,"listnamechoice"="list_name","namechoice"="name","labelchoice"="label::English")
+  choices$listnamechoice<-str_trim(choices$listnamechoice)
+  
   #choices[["labelchoice"]]<-gsub("/","_",choices[["labelchoice"]])
   
   choices_survey<-full_join(survey,choices,by=c("listname"="listnamechoice"))
@@ -206,17 +248,7 @@ kobo_dico <- function(form_file_name) {
   choices_survey$gname_full_label<-""
   choices_survey$gname_full_label<-ifelse(choices_survey$qtype=="select_multiple",paste0(choices_survey$gname_label,"/",choices_survey$labelchoice_clean),choices_survey$gname_label)
   
-  
-  #extra fields
-  ### We can now extract the id of the list name to reconstruct the full label fo rthe question
-  # cat(" \n Now extracting list name from questions type.\n \n")
-  # if("recategorise" %in% colnames(choices))
-  # {
-  #   cat("8 -  Good: You have a column `recategorise` in your `choices` worksheet.\n");
-  # } else
-  # {cat("8 -  No column `recategorise` in your `choices` worksheet. Creating a dummy one for the moment...\n");
-  #   choices$recategorise <- ""}
-  
+
   write.xlsx2(as.data.frame(choices_survey),gsub(".xlsx","_agg_method.xlsx",form_file_name), sheetName="choices", row.names=FALSE, na = "", append = TRUE)
 } #closed by Punya
 NULL
