@@ -1,18 +1,16 @@
 #load libraries
 library(httr)
 library(jsonlite)
-library(lubridate)
+#library(lubridate)
 library(tidyverse)
 library(stringr)
 library(readxl) #read excel file
 library(dplyr)
 library(ggplot2)
-library(rgdal)
-library(xlsx) #write.xlsx2
+#library(rgdal)
+#library(xlsx) #write.xlsx2
 library(openxlsx) #'write xlsx'
 #library(XLConnect) #for big file to write
-
-
 library(data.table)
 
 
