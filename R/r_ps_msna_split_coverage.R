@@ -32,7 +32,8 @@ for (i in 1:nrow(data_org_list))
   #Join coverage to the master Adminlist
   data_coverage_org<-data_admin4 %>% 
                      full_join(data_coverage_org, by=c("admin4Pcode"="admin4Pcode")) %>% 
-                     select(-c(admin0Name_ar,admin0Name_en,admin0Pcode,LastUpdateDate))
+                     select(-c(admin0Name_ar,admin0Name_en,admin0Pcode,LastUpdateDate)) %>% 
+                     arrange(admin1Name_en,admin2Name_en,admin3Name_en,admin4Name_en)
   #NOW save file
   wb<-createWorkbook()
   sheetname_i<-"MSNA_Assigned_Coverage"
