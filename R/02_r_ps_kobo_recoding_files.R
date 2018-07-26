@@ -5,7 +5,7 @@ Last modified: 11 July 2017
 ----'
 
 #2----------START ENCODING ALL FILES IN FOLDER----------------------------------
-  nameodk_recode<-"./xlsform/Afrin_RNA_Questionnaire_KoBo_agg_method.xlsx"
+  nameodk_recode<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
   nameodk<-nameodk_recode
   
   #read ODK file choices and survey sheet
@@ -42,18 +42,18 @@ Last modified: 11 July 2017
         
         #--do not include admin columns in recoding
         #data<-rename(data,"admin1pcode"="Q_M/Q_M1","admin2pcode"="Q_M/Q_M2","admin3pcode"="Q_M/Q_M3","admin4pcode"="Q_M/Q_M4","neighpcode"="Q_M/Q_M5")
-        admin1pcode <-data[,c("group_metadata/X6/governorate")]
-        #admin2pcode <-data[,c("Q_M/Q_M2")]
-        admin3pcode <-data[,c("group_metadata/X6/subdistrict")]
-        admin4pcode <-data[,c("group_metadata/X6/community")]
-        #neighpcode <-data[,c("Q_M/Q_M5")]
+        admin1pcode <-data[,c("Q_M/admin1")]
+        admin2pcode <-data[,c("Q_M/admin2")]
+        admin3pcode <-data[,c("Q_M/admin3")]
+        admin4pcode <-data[,c("Q_M/admin4")]
+        neighpcode <-data[,c("Q_M/neighborho")]
         
         data<-cbind(
               admin1pcode,
-              #admin2pcode,
+              admin2pcode,
               admin3pcode,
               admin4pcode,
-              #neighpcode,
+              neighpcode,
               data
               )
         print(paste0("Start Encoding file - ", fname, ' - Start time =', Sys.time()))

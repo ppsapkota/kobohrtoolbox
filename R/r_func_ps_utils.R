@@ -16,7 +16,8 @@ files_merge_csv = function(mypath){
 #---------------------------------------------------------#
 files_merge_xlsx = function(mypath){
   #mypath <- datawd_csv
-  filenames=list.files(path=mypath, full.names=TRUE, pattern = "*.xlsx|*.XLSX|*.xls|*.XLS")
+  filenames=list.files(path=mypath, full.names=TRUE, ignore.case = TRUE,  pattern = "*.xlsx|*.XLSX|*.xls|*.XLS",)
+  #filenames<-Sys.glob(file.path(mypath, "*.xlsx"))
   all_files <- lapply(filenames, function(x) {read_excel(x,sheet=1,col_types = "text")})
   all_files_merged <-Reduce(bind_rows,all_files)
   #returns the merged dataframe

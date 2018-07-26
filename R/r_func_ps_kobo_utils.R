@@ -1,14 +1,26 @@
 '-
 ***********************************************
 Developed by: Punya Prasad Sapkota
-Last Modified: 18 July 2017
+Last Modified: 18 July 2018
 ***********************************************
 #---USAGE
 #-----KoBo data Access using API v1
 #-----https://kc.humanitarianresponse.info/api/v1
 
+#--Updated to KPI (new KoBo API download)
+
 -'
 #user names and password to be loaded from external authenticate file - this approach to be checked
+
+#---USAGE---version 2
+#-----KoBo data Access using new KoBo API (KPI)
+#-----https://kobo.humanitarianresponse.info/assets/
+#returns list of forms assets as a dataframe
+#url <- "https://kc.humanitarianresponse.info/api/v1/data.csv"
+
+#---USAGE
+#-----KoBo data Access using API v1
+#-----https://kc.humanitarianresponse.info/api/v1
 
 #returns list of forms as a dataframe
 #url <- "https://kc.humanitarianresponse.info/api/v1/data.csv"

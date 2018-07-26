@@ -11,7 +11,7 @@ library(ggplot2)
 #library(xlsx) #write.xlsx2
 library(openxlsx) #'write xlsx'
 #library(XLConnect) #for big file to write
-library(data.table)
+#library(data.table)
 
 
 #load file r_kobo_utils.R file first
@@ -33,7 +33,8 @@ source("./R/r_func_ps_select_multiple_score2zo.R")
 source("./R/r_func_ps_recode_ordinal_odk.R")
 source("./R/r_func_ps_area_of_origin_location.R")
 source("./R/r_func_ps_protection_gender_all_transfer.R")
-
+source("./R/r_func_ps_calculate_confidence_level.R")
+source("./R/r_func_ps_empty_dataframe.R")
 path <- Sys.getenv("PATH")
 Sys.setenv("PATH" = paste(path, "C:/Rtools/bin", sep = ";"))
 

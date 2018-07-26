@@ -25,7 +25,7 @@
 #'
 
 kobo_dico <- function(form_file_name) {
-  cat("\n Your form should be placed within the `data` folder. \n \n")
+  #cat("\n Your form should be placed within the `data` folder. \n \n")
   # read the survey tab of ODK from
   form_tmp <- form_file_name
   ###############################################################################################
@@ -42,6 +42,10 @@ kobo_dico <- function(form_file_name) {
   survey$qlevel <- ""
   ### We can now extract the id of the list name to reconstruct the full label fo rthe question
   cat(" \n Now extracting list name from questions type.\n \n")
+  
+  #check for 'begin group' and 'end group' -> change to "begin_group" and "end_group"
+  survey$type<-ifelse(survey$type=="begin group" | survey$type=="end group",gsub(" ","_",survey$type),survey$type)
+  
   #*split type column - Punya
   survey<-separate(survey,type,into = c("qtype","listname"),sep=" ", remove=FALSE,extra="drop", fill="right")
   survey$qtype<-str_trim(survey$qtype)
@@ -91,6 +95,18 @@ kobo_dico <- function(form_file_name) {
         kobo_header_label<-str_c(kobo_header_group_label_list[1:gr_level],sep = "/",collapse = "/")
         survey$gname_label[i]<- str_c(kobo_header_label,survey[i,c("label")],sep="/")
       }
+      
+      ###when question is not included in any group
+      if ((survey[i,c("qtype")] != "begin_group") && (survey[i,c("qtype")] != "end_group") && (gr_level==0)){
+        #make group header
+        #kobo_header<-survey[i,c("name")]
+        survey$gname[i]<- survey[i,c("name")]
+        # with label
+        #kobo_header_label<-str_c(kobo_header_group_label_list[1:gr_level],sep = "/",collapse = "/")
+        survey$gname_label[i]<- survey[i,c("label")]
+        #print(survey$name[i])
+      }
+      
   } 
   
   #---------------Check COL NAMES In SURVEY---------------------------------
@@ -210,10 +226,17 @@ kobo_dico <- function(form_file_name) {
                        # "repeat_count"
   )]
   
-  write.xlsx2(as.data.frame(survey),gsub(".xlsx","_agg_method.xlsx",form_file_name),sheetName = "survey", row.names=FALSE, na = "")
+  ##--------------------------prepare save name--------------
+  
+  wb<-openxlsx::createWorkbook()
+  addWorksheet(wb,"survey")
+  addWorksheet(wb, "choices")
+  writeData(wb,sheet="survey",x=as.data.frame(survey))
+  
+  #write.xlsx2(as.data.frame(survey),gsub(".xlsx","_agg_method.xlsx",form_file_name),sheetName = "survey", row.names=FALSE, na = "")
   
   #survey <- as.data.frame(survey[!is.na(survey$type), ])
-  choices <- read_excel(form_tmp, sheet = "choices")
+  choices <- read_excel(form_tmp, sheet = "choices", col_types = "text")
   ## Rename the variable label
   #names(survey)[names(survey)=="label::English"] <- "label"
   
@@ -248,8 +271,10 @@ kobo_dico <- function(form_file_name) {
   choices_survey$gname_full_label<-""
   choices_survey$gname_full_label<-ifelse(choices_survey$qtype=="select_multiple",paste0(choices_survey$gname_label,"/",choices_survey$labelchoice_clean),choices_survey$gname_label)
   
-
-  write.xlsx2(as.data.frame(choices_survey),gsub(".xlsx","_agg_method.xlsx",form_file_name), sheetName="choices", row.names=FALSE, na = "", append = TRUE)
+  #write.xlsx2(as.data.frame(choices_survey),gsub(".xlsx","_agg_method.xlsx",form_file_name), sheetName="choices", row.names=FALSE, na = "", append = TRUE)
+  writeData(wb, sheet="choices",x=as.data.frame(choices_survey))
+  saveWorkbook(wb, file=gsub(".xlsx","_agg_method.xlsx",form_file_name), overwrite = TRUE)
+  
 } #closed by Punya
 NULL
 
