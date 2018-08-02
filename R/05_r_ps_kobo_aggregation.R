@@ -8,8 +8,8 @@ source("./R/91_r_ps_kobo_library_init.R")
 source("./R/r_func_ps_kobo_utils.R")
 source("./R/r_func_ps_utils.R")
 #------------DEFINE Aggregation level----------------
-flag_agg_level<-"admin"
-#flag_agg_level<-"admin_vars"
+#flag_agg_level<-"admin"
+flag_agg_level<-"admin_vars"
 #-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
 ##-----data preparation---------
       #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
@@ -156,8 +156,6 @@ flag_agg_level<-"admin"
       #agg_pcode<-ifelse(is.na(data[,c("Q_M/Q_M5")]),data[,c("admin4pcode")],data[,c("neighpcode")])
       #data_level<-ifelse(is.na(data[,c("Q_M/Q_M5")]),"Community","Neighbourhood")
       
-  #### depending on sector
-      sector_list<-dico %>% select(sector) %>% distinct() %>% na.omit()
       ##---data-----
       data<-cbind(
             cf_level_is,
@@ -195,18 +193,49 @@ flag_agg_level<-"admin"
     ####-------THIS BLOCK------------------------
       agg_geo_level<-c("agg_pcode")
       #agg_level_colnames<-c(agg_geo_level, "ki_gender") #ki_gender is not in the data - need to add before proceeding
-      agg_level_colnames<-agg_geo_level
+      #agg_level_colnames<-agg_geo_level
       #db_all$ki_gender<-NA
+      
+      #### depending on sector
+      sector_list<-dico %>% select(sector) %>% distinct() %>% na.omit
+      if (flag_agg_level=="admin_vars"){
+        d_agg_sectors<-sector_list
+      }else{
+        sector_list$sector<-"all"
+        d_agg_sectors<-distinct(sector_list)
+      }
+###LOOP through the list of sectors
+for (i_agg_sector in 1:nrow(d_agg_sectors)){
+        agg_sector<-d_agg_sectors$sector[i_agg_sector]
+        
+        ###for list variables to include in aggregation frame
+        ###group is done based on the variables selected here
+        if (agg_sector=="all"){
+          ###if for all sectors
+          ## aggregation is done at pcode level
+          agg_level_colnames<-c(agg_geo_level)
+        }else{
+          ##get the col name depending on selected sector
+          ###for individual sector aggregation is done at 
+          ##pcode and ki gender level
+          #"""""replace by te actual colname for current sector"""""
+          agg_vars_colnames<-c("ki_gender_is")
+          agg_level_colnames<-c(agg_geo_level,agg_vars_colnames)
+        }
+    
+  ### if sector of the current variable is not 'current sector' or metadata information
+       ##set i_aggmethod<-"DROP" #drop the data column from the output
+  ### ALL CODE goes in
       #
       agg_level_frame<-db_all %>% select_at(vars(agg_level_colnames)) %>% distinct()
       
-      d_m<-agg_level_frame
-      d_m$ki_gender<-"Male"
+      #<-agg_level_frame
+      #d_m$ki_gender<-"Male"
       
-      d_f<-agg_level_frame
-      d_f$ki_gender<-"Female"
+      #d_f<-agg_level_frame
+      #d_f$ki_gender<-"Female"
       
-      agg_level_frame<-bind_rows(d_f,d_m) %>% arrange_at(vars(agg_geo_level))
+      #agg_level_frame<-bind_rows(d_f,d_m) %>% arrange_at(vars(agg_geo_level))
       
       #d_nr<-db_all %>%
       #       group_by_at(vars(one_of(agg_level_colnames))) %>% 
@@ -215,26 +244,30 @@ flag_agg_level<-"admin"
       # 
       #Get unique aggregation level list for aggregation
       #only if KI Gender based aggregation
-      if (flag_agg_level=="admin_vars"){
-          agg_vars_colnames<-c("ki_gender_is")
-          agg_level_colnames<-c(agg_geo_level,agg_vars_colnames)
-          d_ki_g<-select_at(db_all,vars(agg_level_colnames)) %>% na.omit()
-          
-          agg_level_frame<-agg_level_frame %>% left_join(d_ki_g, by=)
-                               
-                               ,
-                                 "ki_gender_cccm",
-                                 "ki_gender_edu",
-                                 "ki_gender_nfishelter",
-                                 "ki_gender_fss",
-                                 "ki_gender_health_mf",
-                                 "ki_gender_health_non_mf",
-                                 "ki_gender_erl",
-                                 "ki_gender_protection")
-          
-          agg_level_colnames<-c(agg_geo_level,agg_vars_colnames)
-      }
-      agg_level_frame<-db_all %>% select_at(vars(agg_level_colnames)) %>% distinct()
+      # if (flag_agg_level=="admin_vars"){
+      #   
+      #     agg_vars_colnames<-c("ki_gender_is")
+      #     agg_level_colnames<-c(agg_geo_level,agg_vars_colnames)
+      #     d_ki_g<-select_at(db_all,vars(agg_level_colnames)) %>% na.omit()
+      #     
+      #     agg_level_frame<-agg_level_frame %>% left_join(d_ki_g, by=)
+      #                          
+      #                          ,
+      #                            "ki_gender_cccm",
+      #                            "ki_gender_edu",
+      #                            "ki_gender_nfishelter",
+      #                            "ki_gender_fss",
+      #                            "ki_gender_health_mf",
+      #                            "ki_gender_health_non_mf",
+      #                            "ki_gender_erl",
+      #                            "ki_gender_protection")
+      #     
+      #     agg_level_colnames<-c(agg_geo_level,agg_vars_colnames)
+      # }
+      # 
+      
+      agg_level_frame<-db_all %>% select_at(vars(agg_level_colnames)) %>% 
+                      distinct() %>% na.omit() %>% arrange_(agg_geo_level)
       #names(agg_level_frame)[1] <- "agg_pcode"
       
       #Prepare aggregation frame
@@ -462,9 +495,9 @@ flag_agg_level<-"admin"
       ##depending on the sector - create aggregation level
       ## this is required as gender for each sector need 
       ## reference to specific column
-      if (flag_agg_level=="admin_vars"){
-        agg_level_colnames<-c(agg_geo_level,vn_strata)
-      }
+      # if (flag_agg_level=="admin_vars"){
+      #   agg_level_colnames<-c(agg_geo_level,vn_strata)
+      # }
       
 ####---THE AGGREGATION STARTS----------------------------------------------####
         #Average (Confidence Level Weighted)
@@ -1103,7 +1136,7 @@ flag_agg_level<-"admin"
             
           }
       
-    }#while
+    }#while ### LOOP through each column in the data
    
       write_csv(db_agg,gsub(".xlsx","_AGG_Step01_WITH_SCORE.csv",data_fname),na='NA')  
 
@@ -1158,11 +1191,11 @@ flag_agg_level<-"admin"
        }
        print(paste0("Writing final results - ", Sys.time())) 
        
-write_csv(db_agg,gsub(".xlsx","_AGG_Step07_FINAL.csv",data_fname))
-openxlsx::write.xlsx(db_agg,gsub(".xlsx","_AGG_Step07_FINAL.xlsx",data_fname),sheetName="data",row.names=FALSE)
-print(paste0("Done - ", Sys.time()))    
+    write_csv(db_agg,gsub(".xlsx","_AGG_Step07_FINAL.csv",data_fname))
+    openxlsx::write.xlsx(db_agg,gsub(".xlsx","_AGG_Step07_FINAL.xlsx",data_fname),sheetName="data",row.names=FALSE)
+    print(paste0("Done - ", Sys.time()))    
       
-      
+} ##### lopping through each sector in the list    
       
       
       
