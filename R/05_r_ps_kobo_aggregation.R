@@ -8,13 +8,13 @@ source("./R/91_r_ps_kobo_library_init.R")
 source("./R/r_func_ps_kobo_utils.R")
 source("./R/r_func_ps_utils.R")
 #------------DEFINE Aggregation level----------------
-#flag_agg_level<-"admin"
-flag_agg_level<-"admin_vars"
+flag_agg_level<-"geo"
+#flag_agg_level<-"GEO_PLUS_VARS"
 #-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
 ##-----data preparation---------
       #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
       #data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs_all_corrected_v2.xlsx"
-      data_fname<-"./Data/100_Aggregation/msna2018_data_raw_merged_20180721_1548_recode.xlsx"
+      data_fname<-"./Data/100_Aggregation/MSNA2018_data_merged.xlsx"
       
       print(paste0("Reading data file - ", Sys.time())) 
       data<-read_excel(data_fname,col_types ="text",na='NA')
@@ -28,6 +28,15 @@ flag_agg_level<-"admin_vars"
       survey<-read_excel(nameodk,sheet = "survey",col_types = "text")  
       dico<-read_excel(nameodk,sheet="choices",col_types ="text")
      
+      
+      ### create sector list
+      #### depending on sector
+      sector_list<-dico %>% select(sector) %>% distinct() %>% na.omit
+      ### SOME preparation for aggregation
+      # create sector_list table with confidence level, ki gender fields
+      sector_list$f_cf_level<-paste0("cf_level_",sector_list$sector)
+      sector_list$f_ki_gender<-paste0("ki_gender_",sector_list$sector)
+      
       #--key
       #key<-row.names(data)
       #data<-cbind(key, data)
@@ -69,12 +78,12 @@ flag_agg_level<-"admin_vars"
       
       #-InterSector
        cf_fields<-c("I_S_Q/Q_K1/Q_K1_C","I_S_Q/Q_K1/Q_K1_D")
-       cf_level_is<-calculate_confidence_level(data,cf_fields,dico) %>% 
-                    rename_("cf_level_is"="cf_level")
+       cf_level_intersector<-calculate_confidence_level(data,cf_fields,dico) %>% 
+                    rename_("cf_level_intersector"="cf_level")
        
        ki_gender_field<-c("I_S_Q/Q_K1/Q_K1_A")
-       ki_gender_is<-select_at(data, vars(ki_gender_field))
-       names(ki_gender_is)<-"ki_gender_is"
+       ki_gender_intersector<-select_at(data, vars(ki_gender_field))
+       names(ki_gender_intersector)<-"ki_gender_intersector"
        
       #-CCCM
        cf_fields<-c("ccm_group/cfp_ccm_gr/cpf_ccm_mo","ccm_group/cfp_ccm_gr/cpf_ccm_ty")
@@ -158,7 +167,7 @@ flag_agg_level<-"admin_vars"
       
       ##---data-----
       data<-cbind(
-            cf_level_is,
+            cf_level_intersector,
             cf_level_cccm,
             cf_level_edu,
             cf_level_nfishelter,
@@ -168,7 +177,7 @@ flag_agg_level<-"admin_vars"
             cf_level_erl,
             cf_level_protection,
             #ki gender
-            ki_gender_is,
+            ki_gender_intersector,
             ki_gender_cccm,
             ki_gender_edu,
             ki_gender_nfishelter,
@@ -187,6 +196,16 @@ flag_agg_level<-"admin_vars"
       choices<-dico
       #data
       db_all<-data
+      ###############--------ORDINAL TO SCORE------------###################
+      db_all<-assign_ordinal_score_bylabel(db_all,choices)
+      write_csv(db_all,gsub(".xlsx","_S1_Step04_ORD_RECODING.csv",data_fname),na='NA')
+      
+      #Recode 'NA' to NA 
+      for (kl in 1:ncol(db_all)){
+        db_all[,kl]<-ifelse(db_all[,kl]=="NA" | db_all[,kl]=="" | db_all[,kl]=="NULL" | is.nan(db_all[,kl]),NA,db_all[,kl])
+      }
+      write_csv(db_all,gsub(".xlsx","_S1_Step04_ORD_RECODING_1.csv",data_fname),na='NA')
+      ###############------------------------------------###################
       ####AGGREGATION LEVEL - geographic level and any other strata
       #agg_level_colnames<-c("agg_pcode", "I_S_Q/Q_K1/Q_K1_A")
       #agg_level_colnames<-c("agg_pcode")
@@ -196,89 +215,66 @@ flag_agg_level<-"admin_vars"
       #agg_level_colnames<-agg_geo_level
       #db_all$ki_gender<-NA
       
-      #### depending on sector
-      sector_list<-dico %>% select(sector) %>% distinct() %>% na.omit
-      if (flag_agg_level=="admin_vars"){
-        d_agg_sectors<-sector_list
+### SOME NOTES
+  # depending on aggregation level selected (flag_agg_level)- assign the sector and loop through it
+  # sector<-'all' is not the best representation of what is being done in this code.
+  # all means <-aggregate for all sectors without considering Ki gender. one record per community
+  # for each sector - ki gender is considered in aggregation
+  
+      ## geo_plus_vars = aggregation at admin level plus additional variable is included in group_by
+      if (flag_agg_level=="GEO_PLUS_VARS"){
+        d_agg_sectors<-sector_list #separate files are written as output for each sector
       }else{
-        sector_list$sector<-"all"
-        d_agg_sectors<-distinct(sector_list)
+        d_agg_sectors<-sector_list
+        d_agg_sectors$sector<-"all"  # aggregate for all the sectors without considering ki gender. one file as output
+        d_agg_sectors<-distinct(d_agg_sectors[,c("sector")])
       }
 ###LOOP through the list of sectors
-for (i_agg_sector in 1:nrow(d_agg_sectors)){
-        agg_sector<-d_agg_sectors$sector[i_agg_sector]
-        
-        ###for list variables to include in aggregation frame
-        ###group is done based on the variables selected here
+      print(paste0("Aggregate data - Start: ",Sys.time()))
+for (i_s in 1:nrow(d_agg_sectors)){
+        agg_sector<-d_agg_sectors$sector[i_s]
+        ###create list of variables to include in the aggregation frame
+        ###group_by is done based on the variables selected here
         if (agg_sector=="all"){
           ###if for all sectors
-          ## aggregation is done at pcode level
+          ## aggregation is done at admin pcode level
           agg_level_colnames<-c(agg_geo_level)
         }else{
           ##get the col name depending on selected sector
           ###for individual sector aggregation is done at 
           ##pcode and ki gender level
-          #"""""replace by te actual colname for current sector"""""
-          agg_vars_colnames<-c("ki_gender_is")
+          agg_vars_colnames<-c(d_agg_sectors$f_ki_gender[i_s])
           agg_level_colnames<-c(agg_geo_level,agg_vars_colnames)
         }
-    
+        ##assign data for aggregation
+        db<-db_all
+        db_heading<-names(db) 
   ### if sector of the current variable is not 'current sector' or metadata information
        ##set i_aggmethod<-"DROP" #drop the data column from the output
   ### ALL CODE goes in
-      #
-      agg_level_frame<-db_all %>% select_at(vars(agg_level_colnames)) %>% distinct()
-      
-      #<-agg_level_frame
-      #d_m$ki_gender<-"Male"
-      
-      #d_f<-agg_level_frame
-      #d_f$ki_gender<-"Female"
-      
-      #agg_level_frame<-bind_rows(d_f,d_m) %>% arrange_at(vars(agg_geo_level))
-      
-      #d_nr<-db_all %>%
-      #       group_by_at(vars(one_of(agg_level_colnames))) %>% 
-      #       summarise(num_record=n()) %>% 
-      #       ungroup()
-      # 
-      #Get unique aggregation level list for aggregation
-      #only if KI Gender based aggregation
-      # if (flag_agg_level=="admin_vars"){
-      #   
-      #     agg_vars_colnames<-c("ki_gender_is")
-      #     agg_level_colnames<-c(agg_geo_level,agg_vars_colnames)
-      #     d_ki_g<-select_at(db_all,vars(agg_level_colnames)) %>% na.omit()
-      #     
-      #     agg_level_frame<-agg_level_frame %>% left_join(d_ki_g, by=)
-      #                          
-      #                          ,
-      #                            "ki_gender_cccm",
-      #                            "ki_gender_edu",
-      #                            "ki_gender_nfishelter",
-      #                            "ki_gender_fss",
-      #                            "ki_gender_health_mf",
-      #                            "ki_gender_health_non_mf",
-      #                            "ki_gender_erl",
-      #                            "ki_gender_protection")
-      #     
-      #     agg_level_colnames<-c(agg_geo_level,agg_vars_colnames)
-      # }
-      # 
-      
-      agg_level_frame<-db_all %>% select_at(vars(agg_level_colnames)) %>% 
-                      distinct() %>% na.omit() %>% arrange_(agg_geo_level)
+      #agg_level_frame<-db_all %>% select_at(vars(agg_level_colnames)) %>% distinct()
+      agg_level_frame<-db %>% 
+                       select_at(vars(agg_level_colnames)) %>% 
+                       distinct() %>% 
+                       na.omit() %>% 
+                       arrange_(agg_geo_level)
       #names(agg_level_frame)[1] <- "agg_pcode"
+      d_nr<-db %>%
+        group_by_at(vars(one_of(agg_level_colnames))) %>% 
+        summarise(num_record=n()) %>% 
+        ungroup()
       
       #Prepare aggregation frame
       #in case of "ki_gender" is a one field from the data, no need to process for following few steps
       #add number of records per agg_geo_level
+      #--AGGREGATION OUTPUT FRAME------------
       db_agg<-agg_level_frame
       ###NOW add MALE/FEMALE KIs
-      #db_agg<-left_join(db_agg,d_nr,by=agg_level_colnames)
+      db_agg<-left_join(db_agg,d_nr,by=agg_level_colnames)
+      write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step00_FRAME_",agg_sector,".csv"),data_fname),na='NA')
       #group_by_(.dots=c("mpg","hp","wt"))
       #db_all<-left_join(db_all,d_nr,by=agg_level_colnames) 
-      write_csv(db_all,gsub(".xlsx","_S1_Step03_COUNT_DUPLICATE.csv",data_fname))  
+      #write_csv(db_all,gsub(".xlsx","_S1_Step03_COUNT_DUPLICATE.csv",data_fname))  
       
     # #********A step can be incorporated here******************
     # #separate db_dupl with duplicate records
@@ -289,27 +285,7 @@ for (i_agg_sector in 1:nrow(d_agg_sectors)){
     #   write_csv(db_dupl,gsub(".xlsx","_S1_Step03_1_DUPLICATE_RECORDS.csv",data_fname))  
     #   write_csv(db_no_dupl,gsub(".xlsx","_S1_Step03_2_NO_DUPLICATE_RECORDS.csv",data_fname))  
     # #merge data (db_agg and db_no_dupl) in later stage
-    #   db<-db_dupl 
-    
-    db<-db_all
-    db_heading<-names(db)  
-  #--AGGREGATION OUTPUT FRAME------------
-    
-    print(paste0("Aggregate data - Start: ",Sys.time()))  
-    
-    write_csv(db_agg,gsub(".xlsx","_AGG_Step00_FRAME.csv",data_fname),na='NA')
-    
-    
-    ###############--------ORDINAL TO SCORE------------###################
-    db<-assign_ordinal_score_bylabel(db,choices)
-    write_csv(db,gsub(".xlsx","_S1_Step04_ORD_RECODING.csv",data_fname),na='NA')
-    
-    #Recode 'NA' to NA 
-    for (kl in 1:ncol(db)){
-      db[,kl]<-ifelse(db[,kl]=="NA" | db[,kl]=="" | db[,kl]=="NULL" | is.nan(db[,kl]),NA,db[,kl])
-    }
-    write_csv(db,gsub(".xlsx","_S1_Step04_ORD_RECODING_1.csv",data_fname),na='NA')
-    ###############------------------------------------###################
+    #   db<-db_dupl
     
     #Loop through each column of the main data
       #-identify question and aggregation type    
@@ -320,6 +296,14 @@ for (i_agg_sector in 1:nrow(d_agg_sectors)){
     {
       j<-j+1
       #j=21 for testing
+      
+    ##--AGG PREP BLOCK--
+      #this block of code identifies the following for each columns
+      # - agg_method (aggregation method)
+      # - i_sector (sector for the data)
+      # - depending on the sector, column for data weighting
+      # - depending on the sector, column for 
+      
       #initiate variables
       non_agg<-0 # flag to hold for aggregation or not
       indexagg<-0 #
@@ -339,6 +323,7 @@ for (i_agg_sector in 1:nrow(d_agg_sectors)){
         #should detect more than one 
         check<-agg_method_all$gname[i_str][1]
       }
+      
       ##check if the question is split var with related
       if (str_detect(agg_heading,"/SPLIT_VAR_SEL1_REL") | str_detect(agg_heading,"/SPLIT_VAR_SEL1_RALL")){
         #gather group name
@@ -350,7 +335,6 @@ for (i_agg_sector in 1:nrow(d_agg_sectors)){
           check<-agg_method_all$gname[i_str][1]  
         }
       }
-      
       
       
       #check if question is multiple select
@@ -368,17 +352,17 @@ for (i_agg_sector in 1:nrow(d_agg_sectors)){
       indexagg<-which(agg_method_all$gname%in%check)
       if(length(indexagg)==0){
           non_agg<-TRUE
-          sector<-"NA"
+          i_sector<-"NA" #sector of the data - individual column
           i_aggmethod<-"NA"
         }else{
-          sector<-agg_method_all$sector[indexagg]
+          i_sector<-agg_method_all$sector[indexagg]
           i_aggmethod<-agg_method_all$aggmethod[indexagg]
           i_qrankgroup<-agg_method_all$qrankgroup[indexagg]
           i_gname<-agg_method_all$gname[indexagg]
         }
       
-      
-      if(length(sector)==0 | is.na(sector)){sector<-"NA"}
+      ###sector of the data column
+      if(length(i_sector)==0 | is.na(i_sector)){i_sector<-"NA"}
       
       ####-----DEFINE ADDITIONAL AGGREGATION METHOD-----------
       # when variables are not in the xlsx form. Some additional data columns are added
@@ -390,7 +374,7 @@ for (i_agg_sector in 1:nrow(d_agg_sectors)){
         i_aggmethod<-"AVG"
       }
       #2. aggregation method if variable is 'key'
-      if(agg_heading=="Key" | agg_heading=="key"){
+      if(str_to_upper(agg_heading)=="KEY"){
         i_aggmethod<-"CONCAT"
       }
       #3. aggregation method if variable is admin name column
@@ -413,7 +397,7 @@ for (i_agg_sector in 1:nrow(d_agg_sectors)){
       #aggregation method for ki_gender
       if(substr(agg_heading,1,10)=="ki_gender_"){
         #drop the field from aggregation as it is already in the aggregation frame
-        i_aggmethod<-"DONOTHING"
+        i_aggmethod<-"DROP"
       }
       
       #aggregation method for geographic level
@@ -421,85 +405,85 @@ for (i_agg_sector in 1:nrow(d_agg_sectors)){
         i_aggmethod<-"DROP"
       }
       
-      
-      print(paste0(nrow(db_agg), " -- ", "Running -- ",agg_heading, " -- Column: ",j, " -- AGGREGATION -- ",i_aggmethod))
-      
-      #STEP 2 - identify sector, confidence level and ki gender
-      
-      if(agg_heading=="cf_level_is" | agg_heading=="ki_gender_is"){
-         sector<-"intersector"
+      #STEP 2 - identify sector for confidence level and ki gender columns
+      if(agg_heading=="cf_level_intersector" | agg_heading=="ki_gender_intersector"){
+         i_sector<-"intersector"
       }else if (agg_heading=="cf_level_cccm" | agg_heading=="ki_gender_cccm"){
-         sector<-"cccm"
+         i_sector<-"cccm"
       }else if (agg_heading=="cf_level_edu" | agg_heading=="ki_gender_edu"){
-        sector<-"education"
+        i_sector<-"education"
       }else if (agg_heading=="cf_level_nfishelter" | agg_heading=="ki_gender_nfishelter"){
-        sector<-"nfishelter"
+        i_sector<-"nfishelter"
       }else if (agg_heading=="cf_level_fss" | agg_heading=="ki_gender_fss"){
-        sector<-"fss"
+        i_sector<-"fss"
       }else if (agg_heading=="cf_level_health_mf" | agg_heading=="ki_gender_health_mf"){
-        sector<-"health_mf"
+        i_sector<-"health_mf"
       }else if (agg_heading=="cf_level_health_non_mf" | agg_heading=="ki_gender_health_non_mf"){
-        sector<-"health_non_mf"
+        i_sector<-"health_non_mf"
+      }else if (agg_heading=="cf_level_erl" | agg_heading=="ki_gender_erl"){
+        i_sector<-"erl"
       }else if (agg_heading=="cf_level_protection" | agg_heading=="ki_gender_protection"){
-        sector<-"protection"
+        i_sector<-"protection"
       }
       
-      #Confidence level column
-       if (sector=="intersector"){
-          vn_cf_level<-"cf_level_is"
-          cf_level<-db[["cf_level_is"]]
-          vn_strata<-"ki_gender_is"
+      #Confidence level and aggregation columns
+       if (i_sector=="intersector"){
+          vn_cf_level<-"cf_level_intersector"
+          cf_level<-db[["cf_level_intersector"]]
+          vn_strata<-"ki_gender_intersector"
           
-       }else if (sector=="cccm"){
+       }else if (i_sector=="cccm"){
          vn_cf_level<-"cf_level_cccm"
          cf_level<-db[["cf_level_cccm"]]
          vn_strata<-"ki_gender_cccm"
          
-       }else if (sector=="education"){
+       }else if (i_sector=="education"){
          vn_cf_level<-"cf_level_edu"
          cf_level<-db[["cf_level_edu"]]
          vn_strata<-"ki_gender_edu"
          
-       }else if (sector=="nfishelter"){
+       }else if (i_sector=="nfishelter"){
          vn_cf_level<-"cf_level_nfishelter"
          cf_level<-db[["cf_level_nfishelter"]]
          vn_strata<-"ki_gender_nfishelter"
          
-       }else if (sector=="fss"){
+       }else if (i_sector=="fss"){
          vn_cf_level<-"cf_level_fss"
          cf_level<-db[["cf_level_fss"]]
          vn_strata<-"ki_gender_fss"
          
-       }else if (sector=="health_mf"){
+       }else if (i_sector=="health_mf"){
          vn_cf_level<-"cf_level_health_mf"
          cf_level<-db[["cf_level_health_mf"]]
          vn_strata<-"ki_gender_health_mf"
          
-       }else if (sector=="health_non_mf"){
+       }else if (i_sector=="health_non_mf"){
          vn_cf_level<-"cf_level_health_non_mf"
          cf_level<-db[["cf_level_health_non_mf"]]
          vn_strata<-"ki_gender_health_non_mf"
          
-       }else if (sector=="erl"){
+       }else if (i_sector=="erl"){
          vn_cf_level<-"cf_level_erl"
          cf_level<-db[["cf_level_erl"]]
          vn_strata<-"ki_gender_erl"
          
-       }else if (sector=="protection"){
+       }else if (i_sector=="protection"){
          vn_cf_level<-"cf_level_protection"
          cf_level<-db[["cf_level_protection"]]
          vn_strata<-"ki_gender_protection"
          
        }else {cf_level<-rep(1,nrow(db))} 
       
-      ##depending on the sector - create aggregation level
-      ## this is required as gender for each sector need 
-      ## reference to specific column
-      # if (flag_agg_level=="admin_vars"){
-      #   agg_level_colnames<-c(agg_geo_level,vn_strata)
-      # }
+      ##check for aggregation
+      # incase it is for individual sectors (ki gender based aggregation)
+      # where flag_agg_level=="GEO_PLUS_VARS", drop columns for all other sectors
+      # i_sector != agg_sector
+      if (flag_agg_level=="GEO_PLUS_VARS" && i_sector != agg_sector && i_sector!="NA"){
+          i_aggmethod<-"DROP"
+      }
       
-####---THE AGGREGATION STARTS----------------------------------------------####
+####---THE AGGREGATION STARTS----------------------------------------------####      #
+      print(paste0("Rows: ",nrow(db_agg)," - Running - ","Column: ",j," - ",agg_heading," - AGGREGATION - ",i_aggmethod))
         #Average (Confidence Level Weighted)
           if (i_aggmethod=="AVG_W"|i_aggmethod=="ORD_1"){
             d<-"a"
@@ -1138,7 +1122,7 @@ for (i_agg_sector in 1:nrow(d_agg_sectors)){
       
     }#while ### LOOP through each column in the data
    
-      write_csv(db_agg,gsub(".xlsx","_AGG_Step01_WITH_SCORE.csv",data_fname),na='NA')  
+      write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step01_WITH_SCORE_",agg_sector,".csv"),data_fname),na='NA')  
 
       db_agg<-sapply(db_agg,as.character)
       db_agg<-data.frame(db_agg,stringsAsFactors=FALSE,check.names=FALSE)    
@@ -1147,19 +1131,19 @@ for (i_agg_sector in 1:nrow(d_agg_sectors)){
         
     ###############--------ORDINAL SCORE TO VARIABLE NAME------------###################
       db_agg<-assign_ordinal_label_byscore(db_agg,choices)
-      write_csv(db_agg,gsub(".xlsx","_AGG_Step02_ORD2LABEL.csv",data_fname),na='NA')
+      write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step02_ORD2LABEL_",agg_sector,".csv"),data_fname),na='NA')
       
     ###############--------------------------------------------------###################
     
     ###############--------SELECT_MULTIPLE (ALL) SCORE TO 0/1------------###################
       db_agg<-select_all_score2zo(db_agg,agg_method_all)
-      write_csv(db_agg,gsub(".xlsx","_AGG_Step03_SEL_ALL.csv",data_fname),na='NA')
+      write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step03_SEL_ALL_",agg_sector,".csv"),data_fname),na='NA')
       
     ###############--------------------------------------------------###################    
     
     ###############--------SELECT_MULTIPLE (THREE/FOUR) SCORE TO 0/1------------###################
       db_agg<-select_upto_n_score2zo(db_agg,agg_method_all)
-      write_csv(db_agg,gsub(".xlsx","_AGG_Step04_SEL3.csv",data_fname),na='NA')
+      write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step04_SEL3_",agg_sector,".csv"),data_fname),na='NA')
       
     ###############--------------------------------------------------###################
       #merge here before recoding ranks
@@ -1173,7 +1157,7 @@ for (i_agg_sector in 1:nrow(d_agg_sectors)){
     
     ###############--------RANK SCORE TO 0/1------------###################
        db_agg<-select_rank_score2rank(db_agg,agg_method_all)
-       write_csv(db_agg,gsub(".xlsx","_AGG_Step05_RANK.csv",data_fname),na='NA')
+       write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step05_RANK_",agg_sector,".csv"),data_fname),na='NA')
       
     ###############--------------------------------------------------###################    
        
@@ -1191,8 +1175,8 @@ for (i_agg_sector in 1:nrow(d_agg_sectors)){
        }
        print(paste0("Writing final results - ", Sys.time())) 
        
-    write_csv(db_agg,gsub(".xlsx","_AGG_Step07_FINAL.csv",data_fname))
-    openxlsx::write.xlsx(db_agg,gsub(".xlsx","_AGG_Step07_FINAL.xlsx",data_fname),sheetName="data",row.names=FALSE)
+    write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step07_FINAL_",agg_sector,".csv"),data_fname))
+    openxlsx::write.xlsx(db_agg,gsub(".xlsx",paste0("_AGG_Step07_FINAL_",agg_sector,".xlsx"),data_fname),sheetName="data",row.names=FALSE)
     print(paste0("Done - ", Sys.time()))    
       
 } ##### lopping through each sector in the list    
