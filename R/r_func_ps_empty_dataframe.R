@@ -12,7 +12,8 @@ get_dataframe_empty_all_rows<-function(d_i, group_fields, v_field){
   d_e<-d_e %>%
        group_by_at(f) %>% 
        distinct() %>%
-       ungroup() 
+       ungroup() %>% 
+       as.data.frame()
   return(d_e)
 }
 
@@ -21,10 +22,10 @@ get_empty_dataframe<-function(d_i,fields){
   d_e<-d_i %>% 
        select_at(vars(fields))
   ##keep first row only
-  d_e<-d_e[1,]
+  d_e<-d_e[1,] 
     #d_e <- data.frame(matrix(vector(),ncol=length(fields)))
     #names(d_e)<-fields
   d_e[1,]<-NA
-   return(d_e)  
+   return(as.data.frame(d_e))  
   }  
 NULL

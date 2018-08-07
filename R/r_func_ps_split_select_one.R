@@ -1,7 +1,8 @@
-'
-split select one into multiple columns for each variable
-
-'
+#'
+#split select one into multiple columns for each variable
+#and assign 
+#
+#'
 split_select_one_rank<-function(db,choices){
   print(paste0("Split select_one questions for Ranking: ", Sys.time()))
   #variable initialization
@@ -19,7 +20,7 @@ split_select_one_rank<-function(db,choices){
   
   ###little bit of work is required here
   #ch_s1_headers$gname<-str_replace_all( ch_s1_headers$gname,ch_s1_headers$name,"")
-  #ch_s1_headers<-ch_s1_headers[,-1] %>% distinct()
+  
   
   #names(ch_s1_headers)[1]<-"qrankgroup"
   db_rec<-db # dont see any reason to do it
@@ -45,7 +46,8 @@ split_select_one_rank<-function(db,choices){
             vn_name<-ch_s1_lookup$name[i_lt]
             vn_gname<-ch_s1_lookup$gname[i_lt]
             vn_group<-ch_s1_lookup$qrankgroup[i_lt]
-            
+            lbl_choice<-ch_s1_lookup$labelchoice[i_lt]
+            lbl_choice_c<-ch_s1_lookup$labelchoice_clean[i_lt]
             #to make vn_group, replace 'name' from the gname
             #vn_group<-str_replace_all(vn_gname,vn_name,"")
             ##detect the last characte and append "/" if it is not the last character
@@ -70,6 +72,12 @@ split_select_one_rank<-function(db,choices){
             vn_qrankscore<-ch_s1_lookup$qrankscore[i_lt]
             vn_labelchoice<-ch_s1_lookup$labelchoice[i_lt]
             d_ind<-which(names(db_rec)==vn_gname)
+            
+            #if ranked value is Do not know or No answer
+            # assign small score so that it does not affect the result
+            if (vn_labelchoice %in% dnk_no_ans_label_list){
+              vn_qrankscore<-as.numeric(vn_qrankscore)*0.01 ##small score is assigned.
+            }
             #
             db_rec[,ch_ind]<-ifelse(db_rec[,d_ind]==vn_labelchoice & !is.na(db_rec[,d_ind]),vn_qrankscore,db_rec[,ch_ind])
           }

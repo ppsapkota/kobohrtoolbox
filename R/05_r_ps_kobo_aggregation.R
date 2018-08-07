@@ -8,27 +8,36 @@ source("./R/91_r_ps_kobo_library_init.R")
 source("./R/r_func_ps_kobo_utils.R")
 source("./R/r_func_ps_utils.R")
 #------------DEFINE Aggregation level----------------
+#start the clock
+#ptm_start<-proc.time()
+start_time <- as.numeric(as.numeric(Sys.time())*1000, digits=10) # place at start
+
 flag_agg_level<-"geo"
 #flag_agg_level<-"GEO_PLUS_VARS"
+
+#List of Do not know and No answer list
+dnk_no_ans_label_list<-c("No answer", "Dont know","Do not know",
+                         "Don’t know", "don't know", "dont know/no answer",
+                         "Don’t know/Unsure", "Dont know / Unsure", "Dont know / Unsure",
+                         "Do not know/ Unsure", "Do not know / unsure", "Dont Know / Unsure",
+                         "do not know  / unsure", "Do not know/Unsure")
 #-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
 ##-----data preparation---------
-      #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
-      #data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs_all_corrected_v2.xlsx"
-      data_fname<-"./Data/100_Aggregation/MSNA2018_data_merged.xlsx"
-      
+#data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
+#data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs_all_corrected_v2.xlsx"
+data_fname<-"./Data/100_Aggregation/MSNA2018_data_merged.xlsx"
+nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
+#
       print(paste0("Reading data file - ", Sys.time())) 
       data<-read_excel(data_fname,col_types ="text",na='NA')
       #data<-read.csv(data_fname,na="NA",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)
       data<-as.data.frame(data)
-      #read data file to recode
-      nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
       
-      #nameodk<-"./xlsform/kobo_master_v7_protection_wcase_agg_method.xlsx"
+      #read data file to recode
       #read ODK file choices and survey sheet
       survey<-read_excel(nameodk,sheet = "survey",col_types = "text")  
       dico<-read_excel(nameodk,sheet="choices",col_types ="text")
      
-      
       ### create sector list
       #### depending on sector
       sector_list<-dico %>% select(sector) %>% distinct() %>% na.omit
@@ -59,6 +68,7 @@ flag_agg_level<-"geo"
       write_csv(data,gsub(".xlsx","_S1_Step01_SPLIT_SEL1.csv",data_fname),na='NA')      
       
 ###############--------SPLIT RANK SELECT ONE TO MULTIPLE------------###################
+      ##small score (rank score / 100) is assigned to Do not know or No answers
       data<-split_select_one_rank(data,dico)
       write_csv(data,gsub(".xlsx","_S1_Step01_SPLIT_RANK.csv",data_fname),na='NA')
       
@@ -196,7 +206,7 @@ flag_agg_level<-"geo"
       choices<-dico
       #data
       db_all<-data
-      ###############--------ORDINAL TO SCORE------------###################
+      ###############--------RECODE ORDINAL TO SCORE------------###################
       db_all<-assign_ordinal_score_bylabel(db_all,choices)
       write_csv(db_all,gsub(".xlsx","_S1_Step04_ORD_RECODING.csv",data_fname),na='NA')
       
@@ -204,7 +214,12 @@ flag_agg_level<-"geo"
       for (kl in 1:ncol(db_all)){
         db_all[,kl]<-ifelse(db_all[,kl]=="NA" | db_all[,kl]=="" | db_all[,kl]=="NULL" | is.nan(db_all[,kl]),NA,db_all[,kl])
       }
-      write_csv(db_all,gsub(".xlsx","_S1_Step04_ORD_RECODING_1.csv",data_fname),na='NA')
+      write_csv(db_all,gsub(".xlsx","_S1_Step04_ORD_RECODING_NA2NA.csv",data_fname),na='NA')
+      
+      ##############--------RECODE -1/-5 in Double/Integer columns to NA--------##########
+      db_all<-recode_numeric_question(db_all,choices)
+      write_csv(db_all,gsub(".xlsx","_S1_Step05_NUMERIC_RECODING.csv",data_fname),na='NA')
+      
       ###############------------------------------------###################
       ####AGGREGATION LEVEL - geographic level and any other strata
       #agg_level_colnames<-c("agg_pcode", "I_S_Q/Q_K1/Q_K1_A")
@@ -858,15 +873,47 @@ for (i_s in 1:nrow(d_agg_sectors)){
             ldt<-as.data.frame(ldt)
             #if count more than one and values are do not know or no answer -> change it to NA
             l_col_i<-which(names(ldt)=="n_record")
-            ldt[,vn_col_i]<-ifelse(ldt[,l_col_i]>1 & (ldt[,vn_col_i]=="No answer" |
-                                                      ldt[,vn_col_i]=="dont know/no answer"|
-                                                      ldt[,vn_col_i]=="Dont know / Unsure"|
-                                                      ldt[,vn_col_i]=="Dont know / Unsure"|
-                                                      ldt[,vn_col_i]=="Dont know"|
-                                                      ldt[,vn_col_i]=="Don’t know/Unsure"|
-                                                      ldt[,vn_col_i]=="Don’t know"|
-                                                      ldt[,vn_col_i]=="don't know"|
-                                                      ldt[,vn_col_i]=="Do not know/Unsure"),NA,ldt[,vn_col_i])
+            # ldt[,vn_col_i]<-ifelse(ldt[,l_col_i]>1 & (ldt[,vn_col_i]=="No answer" |
+            #                                           ldt[,vn_col_i]=="not sure / do not know"|
+            #                                           ldt[,vn_col_i]=="Not sure/do not know"|
+            #                                           ldt[,vn_col_i]=="Unsure"|
+            #                                           ldt[,vn_col_i]=="Unsure / no answer"|
+            #                                           ldt[,vn_col_i]=="Do not know"|
+            #                                           ldt[,vn_col_i]=="Dont know"|
+            #                                           ldt[,vn_col_i]=="Don’t know"|
+            #                                           ldt[,vn_col_i]=="don't know"|
+            #                                           ldt[,vn_col_i]=="dont know/no answer"|
+            #                                           ldt[,vn_col_i]=="Don’t know/Unsure"|
+            #                                           ldt[,vn_col_i]=="Dont know / Unsure"|
+            #                                           ldt[,vn_col_i]=="Dont know / Unsure"|
+            #                                           ldt[,vn_col_i]=="Do not know/ Unsure"|
+            #                                           ldt[,vn_col_i]=="Do not know / unsure"|
+            #                                           ldt[,vn_col_i]=="Dont Know / Unsure"|
+            #                                           ldt[,vn_col_i]=="do not know  / unsure"|
+            #                                           ldt[,vn_col_i]=="Do not know/Unsure"),NA,ldt[,vn_col_i])
+            
+            ldt[,vn_col_i]<-ifelse(ldt[,l_col_i]>1 & (ldt[,vn_col_i] %in% dnk_no_ans_label_list),NA,ldt[,vn_col_i])
+            #Do not know
+            #No answer
+            #Do not know/ Unsure
+            #Do not know / unsure
+            #Dont Know / Unsure
+            #do not know  / unsure
+            
+            ##--2018 list--
+            #Do not know
+            #do not know  / unsure
+            #Do not know / unsure
+            #Do not know/ Unsure
+            #Don’t know
+            #Dont Know
+            #Dont Know / Unsure
+            #No answer
+            #not sure / do not know
+            #Not sure/do not know
+            #Unsure
+            #Unsure / no answer
+            
             ldt<-na.omit(ldt)
             #write_csv(ldt,"ldt_b.csv")
             # d<-ldt %>% group_by_(agg_level_colnames)%>%
@@ -875,10 +922,11 @@ for (i_s in 1:nrow(d_agg_sectors)){
             #for checking
             #ldt$cf_level<-ifelse(ldt$agg_pcode=="C4278",10,ldt$cf_level)
             
-            ##RANK the data
+            ##RANK the data [- field name]
+            
             d<-ldt %>% ungroup() %>% 
                group_by_at(.vars=vars(agg_level_colnames)) %>% 
-               mutate_at(vars(vn_weight),funs(rank=rank(.,ties.method = 'min'))) %>%
+               mutate_at(vars(vn_weight),funs(rank=rank(-.,ties.method = 'min'))) %>%
                ungroup()
             ##now select rank 1 only
             d<-filter(d,rank==1) %>% 
@@ -955,15 +1003,24 @@ for (i_s in 1:nrow(d_agg_sectors)){
               ldt<-as.data.frame(ldt)
               #if count more than one and values are do not know or no answer -> change it to NA
               l_col_i<-which(names(ldt)=="n_record")
-              ldt[,vn_col_i]<-ifelse(ldt[,l_col_i]>1 & (ldt[,vn_col_i]=="No answer" |
-                                                          ldt[,vn_col_i]=="dont know/no answer"|
-                                                          ldt[,vn_col_i]=="Dont know / Unsure"|
-                                                          ldt[,vn_col_i]=="Dont know / Unsure"|
-                                                          ldt[,vn_col_i]=="Dont know"|
-                                                          ldt[,vn_col_i]=="Don’t know/Unsure"|
-                                                          ldt[,vn_col_i]=="Don’t know"|
-                                                          ldt[,vn_col_i]=="don't know"|
-                                                          ldt[,vn_col_i]=="Do not know/Unsure"),NA,ldt[,vn_col_i])
+              
+              
+              # ldt[,vn_col_i]<-ifelse(ldt[,l_col_i]>1 & (ldt[,vn_col_i]=="No answer" |
+              #                                           ldt[,vn_col_i]=="Dont know"|
+              #                                           ldt[,vn_col_i]=="Do not know"|
+              #                                           ldt[,vn_col_i]=="Don’t know"|
+              #                                           ldt[,vn_col_i]=="don't know"|
+              #                                           ldt[,vn_col_i]=="dont know/no answer"|
+              #                                           ldt[,vn_col_i]=="Don’t know/Unsure"|
+              #                                           ldt[,vn_col_i]=="Dont know / Unsure"|
+              #                                           ldt[,vn_col_i]=="Dont know / Unsure"|
+              #                                           ldt[,vn_col_i]=="Do not know/ Unsure"|
+              #                                           ldt[,vn_col_i]=="Do not know / unsure"|
+              #                                           ldt[,vn_col_i]=="Dont Know / Unsure"|
+              #                                           ldt[,vn_col_i]=="do not know  / unsure"|
+              #                                           ldt[,vn_col_i]=="Do not know/Unsure"),NA,ldt[,vn_col_i])
+              
+              ldt[,vn_col_i]<-ifelse(ldt[,l_col_i]>1 & (ldt[,vn_col_i] %in% dnk_no_ans_label_list),NA,ldt[,vn_col_i])
               ldt<-na.omit(ldt)
               #count again after removing - checking whether more than one accepted answers are there or not
               ldt %>% group_by_at(vars(agg_level_colnames))%>%
@@ -976,10 +1033,10 @@ for (i_s in 1:nrow(d_agg_sectors)){
                ldt<-ldt %>% select_at(vars(f)) %>% distinct()
                
               #RANK
-               ##RANK the data
+               ##RANK the data (- for larger value to small rank number)
                d<-ldt %>% ungroup() %>% 
                  group_by_at(.vars=vars(agg_level_colnames)) %>% 
-                 mutate_at(vars(vn_weight),funs(rank=rank(.,ties.method = 'min'))) %>%
+                 mutate_at(vars(vn_weight),funs(rank=rank(-.,ties.method = 'min'))) %>%
                  ungroup()
                ##now select rank 1 only
                d<-filter(d,rank==1) %>% 
@@ -1135,12 +1192,26 @@ for (i_s in 1:nrow(d_agg_sectors)){
       
     ###############--------------------------------------------------###################
     
+      ###############--------ORDINAL REPLACE NAs by Do not know or No answer------------###################
+      db_agg<-assign_ordinal_NAs_back2var(db_agg,choices,data,agg_level_colnames)
+      write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step02_ORD2LABEL_",agg_sector,".csv"),data_fname),na='NA')
+      ###############--------------------------------------------------###################  
+      
+      
     ###############--------SELECT_MULTIPLE (ALL) SCORE TO 0/1------------###################
       db_agg<-select_all_score2zo(db_agg,agg_method_all)
       write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step03_SEL_ALL_",agg_sector,".csv"),data_fname),na='NA')
       
     ###############--------------------------------------------------###################    
     
+      ###############--------SELECT_ONE SPLIT AND RETAIL ALL SCORE TO 0/1------------###################
+      db_agg<-select_one_retain_all_score2zo(db_agg,agg_method_all)
+      write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step03_SEL_ALL_",agg_sector,".csv"),data_fname),na='NA')
+      
+      ###############--------------------------------------------------###################    
+      
+      
+      
     ###############--------SELECT_MULTIPLE (THREE/FOUR) SCORE TO 0/1------------###################
       db_agg<-select_upto_n_score2zo(db_agg,agg_method_all)
       write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step04_SEL3_",agg_sector,".csv"),data_fname),na='NA')
@@ -1180,8 +1251,13 @@ for (i_s in 1:nrow(d_agg_sectors)){
     print(paste0("Done - ", Sys.time()))    
       
 } ##### lopping through each sector in the list    
+
       
+end_time <- as.numeric(as.numeric(Sys.time())*1000, digits=10) # place at end
       
+total_time<-(end_time - start_time)/(1000*60)   # run time (in milliseconds)      
+      
+print (paste0("ALL DONE - Time taken : ",total_time))     
       
       
       

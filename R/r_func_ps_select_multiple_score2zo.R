@@ -28,6 +28,41 @@ select_all_score2zo <- function(data1, agg_method1) {
 }
 NULL
 
+select_one_retain_all_score2zo <- function(data1, agg_method1) {
+  print(paste0("Recode select all values to 1/0"))
+  ### First we provide attribute label to variable name
+  #data.label <- as.data.frame(names(data))
+  #data<-as.data.frame(data,stringsAsFactors=FALSE,check.names=FALSE)
+  data_names<-names(data1)
+  #-select all the field headers for select one
+  agg_m_sall<-filter(agg_method1,aggmethod=="SEL1_RALL")
+  #--loop through all the rows or take all value
+  agg_m_sall_headers<-distinct(as.data.frame(agg_m_sall[,"gname"]))
+  data_rec<-as.data.frame(data1) # dont see any reason to do it
+  
+  for(i in 1:nrow(agg_m_sall_headers)){
+    i_headername<-agg_m_sall_headers[i,1]
+    #column index from the data
+    col_ind<-which(str_detect(data_names, paste0(i_headername,"/")) %in% TRUE)
+    #Replace only if header is found in the main data table
+    if (length(col_ind)>0){
+      #loop through each index
+      for (i_lt in col_ind){
+        #i_lt=2
+        d_i_lt<-conv_num(data_rec[,i_lt])
+        data_rec[,i_lt]<-ifelse(d_i_lt>1,1,data_rec[,i_lt])
+      }
+    }
+  }#finish recoding of select one ORDINAL
+  return(data_rec)
+}
+NULL
+
+
+
+
+
+
 select_upto_n_score2zo <- function(data1, agg_method1) {
   print(paste0("Recode select top 3/top 4 values to 1/0"))
   ### First we provide attribute label to variable name
