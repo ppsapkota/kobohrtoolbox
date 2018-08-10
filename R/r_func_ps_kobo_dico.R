@@ -163,14 +163,14 @@ kobo_dico <- function(form_file_name) {
   # } else
   # {cat("1- No column `disaggregation` in your survey worksheet. Creating a dummy one for the moment...\n");
   #   survey$disaggregation <- ""}
-  
-  
-  if("correlate" %in% colnames(survey))
-  {
-    cat("2- Good: You have a column `correlate` in your survey worksheet. This will be used to define the variables that should be checked for correlation between each others.\n");
-  } else
-  {cat("2- No column `correlate` in your survey worksheet. Creating a dummy one for the moment...\n");
-    survey$correlate <- ""}
+  # 
+  # 
+  # if("correlate" %in% colnames(survey))
+  # {
+  #   cat("2- Good: You have a column `correlate` in your survey worksheet. This will be used to define the variables that should be checked for correlation between each others.\n");
+  # } else
+  # {cat("2- No column `correlate` in your survey worksheet. Creating a dummy one for the moment...\n");
+  #   survey$correlate <- ""}
   
   # if("chapter" %in% colnames(survey))
   # {

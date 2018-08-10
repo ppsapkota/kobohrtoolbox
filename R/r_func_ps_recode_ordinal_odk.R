@@ -120,9 +120,9 @@ assign_ordinal_NAs_back2var <- function(db_agg1,choices1,data1,agg_level_vars1) 
       }
       #lookuptable
       lookup_table<-filter(ch_s1,gname==i_headername)
-      lookup_table<-select(lookup_table,c("namechoice","labelchoice","vtype","vscore","gname"))
+      lookup_table<-select(lookup_table,c("namechoice","labelchoice","vtype","vscore","vweight","gname"))
       
-      d_lt<-lookup_table[,c("labelchoice","vscore")]
+      d_lt<-lookup_table[,c("labelchoice","vscore","vweight")]
       names(d_lt)[1]<-i_headername
       ##bring ordinal score
       d<-d %>% left_join(d_lt,by=i_headername)
@@ -154,7 +154,7 @@ assign_ordinal_NAs_back2var <- function(db_agg1,choices1,data1,agg_level_vars1) 
         ungroup()
       ##number of records per response
       d_nr_vars<-d_ %>% group_by_at(vars(f)) %>% 
-                  summarise(n_records_vars=n()) %>% 
+                  summarise(n_records_vars=n(),sum_vweight=sum(as.numeric(vweight))) %>% 
                   ungroup()
       
       ###join again
@@ -165,7 +165,8 @@ assign_ordinal_NAs_back2var <- function(db_agg1,choices1,data1,agg_level_vars1) 
       ##now do the rank of n_record_vars
       d_vars<-d_vars %>%
                  group_by_at(vars(agg_level_vars1)) %>% 
-                 mutate(na_rank=rank(-n_records_vars,ties.method = 'min')) %>%
+                 #mutate(na_rank=rank(-n_records_vars,ties.method = 'min')) %>%
+                 mutate(na_rank=rank(-sum_vweight,ties.method = 'min')) %>%
                  ungroup() %>%          
                  distinct() 
       ##now select rank 1 only

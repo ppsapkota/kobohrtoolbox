@@ -8,25 +8,27 @@ source("./R/91_r_ps_kobo_library_init.R")
 source("./R/r_func_ps_kobo_utils.R")
 source("./R/r_func_ps_utils.R")
 #------------DEFINE Aggregation level----------------
-#start the clock
-#ptm_start<-proc.time()
-start_time <- as.numeric(as.numeric(Sys.time())*1000, digits=10) # place at start
-
-flag_agg_level<-"geo"
-#flag_agg_level<-"GEO_PLUS_VARS"
-
-#List of Do not know and No answer list
-dnk_no_ans_label_list<-c("No answer", "Dont know","Do not know",
-                         "Don’t know", "don't know", "dont know/no answer",
-                         "Don’t know/Unsure", "Dont know / Unsure", "Dont know / Unsure",
-                         "Do not know/ Unsure", "Do not know / unsure", "Dont Know / Unsure",
-                         "do not know  / unsure", "Do not know/Unsure")
-#-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
 ##-----data preparation---------
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs_all_corrected_v2.xlsx"
 data_fname<-"./Data/100_Aggregation/MSNA2018_data_merged.xlsx"
 nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
+#start the clock
+#ptm_start<-proc.time()
+start_time <- as.numeric(as.numeric(Sys.time())*1000, digits=10) # place at start
+##agg geographic level or geographic plus another variable
+flag_agg_level<-"GEO"
+#flag_agg_level<-"GEO_PLUS_VARS"
+
+#List of Do not know and No answer list - collected from choices sheet
+dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
+                         "Don’t know", "don't know", "dont know/no answer",
+                         "Don’t know/Unsure", "Dont know / Unsure", "Dont know / Unsure",
+                         "Do not know/ Unsure", "Do not know / unsure", "Dont Know / Unsure",
+                         "do not know  / unsure", "Do not know/Unsure", "DO NOT KNOW",
+                         "Unsure / no answer","Unsure","Not sure/do not know","Not sure/do not know",
+                         "not sure / do not know", "Not sure / do not know")
+#-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
 #
       print(paste0("Reading data file - ", Sys.time())) 
       data<-read_excel(data_fname,col_types ="text",na='NA')
@@ -175,8 +177,12 @@ nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
       #agg_pcode<-ifelse(is.na(data[,c("Q_M/Q_M5")]),data[,c("admin4pcode")],data[,c("neighpcode")])
       #data_level<-ifelse(is.na(data[,c("Q_M/Q_M5")]),"Community","Neighbourhood")
       
+       ##same confidence level for all <- that is no weighting is applied 
+      cf_level_equal<-rep(1,nrow(data))
+      
       ##---data-----
       data<-cbind(
+            cf_level_equal,
             cf_level_intersector,
             cf_level_cccm,
             cf_level_edu,
@@ -311,7 +317,7 @@ for (i_s in 1:nrow(d_agg_sectors)){
     {
       j<-j+1
       #j=21 for testing
-      
+      #j<-225 for select multiple
     ##--AGG PREP BLOCK--
       #this block of code identifies the following for each columns
       # - agg_method (aggregation method)
@@ -420,24 +426,25 @@ for (i_s in 1:nrow(d_agg_sectors)){
         i_aggmethod<-"DROP"
       }
       
-      #STEP 2 - identify sector for confidence level and ki gender columns
-      if(agg_heading=="cf_level_intersector" | agg_heading=="ki_gender_intersector"){
+      #STEP 2 - identify sector for confidence level,ki gender and sector answered columns
+      ##this is assigning and overwriting
+      if(agg_heading=="cf_level_intersector" | agg_heading=="ki_gender_intersector" | agg_heading=="gchoose_th/Inter Sector"){
          i_sector<-"intersector"
-      }else if (agg_heading=="cf_level_cccm" | agg_heading=="ki_gender_cccm"){
+      }else if (agg_heading=="cf_level_cccm" | agg_heading=="ki_gender_cccm"| agg_heading=="gchoose_th/CCCM"){
          i_sector<-"cccm"
-      }else if (agg_heading=="cf_level_edu" | agg_heading=="ki_gender_edu"){
+      }else if (agg_heading=="cf_level_edu" | agg_heading=="ki_gender_edu" | agg_heading=="gchoose_th/Education"){
         i_sector<-"education"
-      }else if (agg_heading=="cf_level_nfishelter" | agg_heading=="ki_gender_nfishelter"){
+      }else if (agg_heading=="cf_level_nfishelter" | agg_heading=="ki_gender_nfishelter" | agg_heading=="gchoose_th/NFI Shelter"){
         i_sector<-"nfishelter"
-      }else if (agg_heading=="cf_level_fss" | agg_heading=="ki_gender_fss"){
+      }else if (agg_heading=="cf_level_fss" | agg_heading=="ki_gender_fss" | agg_heading=="gchoose_th/Food Security"){
         i_sector<-"fss"
       }else if (agg_heading=="cf_level_health_mf" | agg_heading=="ki_gender_health_mf"){
         i_sector<-"health_mf"
       }else if (agg_heading=="cf_level_health_non_mf" | agg_heading=="ki_gender_health_non_mf"){
         i_sector<-"health_non_mf"
-      }else if (agg_heading=="cf_level_erl" | agg_heading=="ki_gender_erl"){
+      }else if (agg_heading=="cf_level_erl" | agg_heading=="ki_gender_erl" | agg_heading=="gchoose_th/Early Recovery Sector"){
         i_sector<-"erl"
-      }else if (agg_heading=="cf_level_protection" | agg_heading=="ki_gender_protection"){
+      }else if (agg_heading=="cf_level_protection" | agg_heading=="ki_gender_protection" | agg_heading=="gchoose_th/Protection"){
         i_sector<-"protection"
       }
       
@@ -487,7 +494,23 @@ for (i_s in 1:nrow(d_agg_sectors)){
          cf_level<-db[["cf_level_protection"]]
          vn_strata<-"ki_gender_protection"
          
-       }else {cf_level<-rep(1,nrow(db))} 
+       }else {
+         vn_cf_level<-"cf_level_equal"
+         #cf_level<-db[["cf_level_equal"]]
+         cf_level<-rep(1,nrow(db))
+       } 
+      
+      ###over-writing vn_cf_level
+      ##equal weight columns
+      list_eqweight_columns<-c("gchoose_th/Inter Sector",	"gchoose_th/CCCM","gchoose_th/Education",
+                               "gchoose_th/NFI Shelter","gchoose_th/Food Security",	"gchoose_th/Health Sector",
+                               "gchoose_th/Early Recovery Sector",	"gchoose_th/Protection"
+                               )
+      
+      if (agg_heading %in% list_eqweight_columns){
+          vn_cf_level<-"cf_level_equal"
+      }
+      
       
       ##check for aggregation
       # incase it is for individual sectors (ki gender based aggregation)
@@ -727,7 +750,7 @@ for (i_s in 1:nrow(d_agg_sectors)){
             d<-ldt %>% 
                ungroup() %>% 
                group_by_at(.vars=vars(agg_level_colnames)) %>% 
-               summarise_at(vars(vn_agg),funs(paste0(.,collapse = " | "))) %>% 
+               summarise_at(vars(vn_agg),funs(paste0(.,collapse = " ; "))) %>% 
               ungroup()
             
             #dummy dataframe if there is no records
@@ -757,7 +780,7 @@ for (i_s in 1:nrow(d_agg_sectors)){
               ungroup() %>% 
               group_by_at(.vars=vars(agg_level_colnames)) %>% 
               distinct() %>% 
-              summarise_at(vars(vn_agg),funs(paste0(.,collapse = " | "))) %>% 
+              summarise_at(vars(vn_agg),funs(paste0(.,collapse = " ; "))) %>% 
               ungroup()
             
             #dummy dataframe if there is no records
@@ -856,14 +879,26 @@ for (i_s in 1:nrow(d_agg_sectors)){
                 ldt <- get_empty_dataframe(db, i_heading)
             }
             #write.csv(ldt,"./data/data_final/sel1_rank00_ldt.csv")
+            ###bring weight for each variable from 'choices' sheet
+            #identify the row and get lookup table
+            d_lk<-choices %>% filter(gname==vn_agg) %>% 
+                  select(labelchoice,vweight) %>% 
+                  mutate_at(.vars=vars(vweight),.funs=funs(as.numeric(as.character(.)))) 
+            names(d_lk)[1]<-vn_agg
+            
+            ##bring weight to the data
+            ldt<-ldt %>% left_join(d_lk,by=vn_agg)
+            
+            
             ldt<-ldt %>% ungroup() %>% 
+              mutate_at(vars(vn_weight),funs(.*vweight)) %>% 
               group_by_at(.vars=vars(agg_level_colnames,vn_agg)) %>% 
               summarise_at(vars(vn_weight),funs(sum(.,na.rm=TRUE))) %>%
               ungroup()
             # ldt<-ldt %>% group_by_(agg_level_colnames,as.name(vn_agg))%>%
             #              summarise(cf_level=sum(cf_level,na.rm=TRUE)) %>%
             #              ungroup()
-            #remove no answer or do not know from the list
+           
             ldt_count<-ldt %>% group_by_at(agg_level_colnames)%>%
                         summarise(n_record=n()) %>%
                         ungroup()
@@ -873,76 +908,74 @@ for (i_s in 1:nrow(d_agg_sectors)){
             ldt<-as.data.frame(ldt)
             #if count more than one and values are do not know or no answer -> change it to NA
             l_col_i<-which(names(ldt)=="n_record")
-            # ldt[,vn_col_i]<-ifelse(ldt[,l_col_i]>1 & (ldt[,vn_col_i]=="No answer" |
-            #                                           ldt[,vn_col_i]=="not sure / do not know"|
-            #                                           ldt[,vn_col_i]=="Not sure/do not know"|
-            #                                           ldt[,vn_col_i]=="Unsure"|
-            #                                           ldt[,vn_col_i]=="Unsure / no answer"|
-            #                                           ldt[,vn_col_i]=="Do not know"|
-            #                                           ldt[,vn_col_i]=="Dont know"|
-            #                                           ldt[,vn_col_i]=="Don’t know"|
-            #                                           ldt[,vn_col_i]=="don't know"|
-            #                                           ldt[,vn_col_i]=="dont know/no answer"|
-            #                                           ldt[,vn_col_i]=="Don’t know/Unsure"|
-            #                                           ldt[,vn_col_i]=="Dont know / Unsure"|
-            #                                           ldt[,vn_col_i]=="Dont know / Unsure"|
-            #                                           ldt[,vn_col_i]=="Do not know/ Unsure"|
-            #                                           ldt[,vn_col_i]=="Do not know / unsure"|
-            #                                           ldt[,vn_col_i]=="Dont Know / Unsure"|
-            #                                           ldt[,vn_col_i]=="do not know  / unsure"|
-            #                                           ldt[,vn_col_i]=="Do not know/Unsure"),NA,ldt[,vn_col_i])
-            
-            ldt[,vn_col_i]<-ifelse(ldt[,l_col_i]>1 & (ldt[,vn_col_i] %in% dnk_no_ans_label_list),NA,ldt[,vn_col_i])
-            #Do not know
-            #No answer
-            #Do not know/ Unsure
-            #Do not know / unsure
-            #Dont Know / Unsure
-            #do not know  / unsure
-            
-            ##--2018 list--
-            #Do not know
-            #do not know  / unsure
-            #Do not know / unsure
-            #Do not know/ Unsure
-            #Don’t know
-            #Dont Know
-            #Dont Know / Unsure
-            #No answer
-            #not sure / do not know
-            #Not sure/do not know
-            #Unsure
-            #Unsure / no answer
-            
-            ldt<-na.omit(ldt)
-            #write_csv(ldt,"ldt_b.csv")
-            # d<-ldt %>% group_by_(agg_level_colnames)%>%
-            #   mutate(rank=rank(-cf_level,ties.method = 'min')) %>%
-            #   ungroup()
-            #for checking
-            #ldt$cf_level<-ifelse(ldt$agg_pcode=="C4278",10,ldt$cf_level)
-            
-            ##RANK the data [- field name]
-            
+            ###some changes here
             d<-ldt %>% ungroup() %>% 
-               group_by_at(.vars=vars(agg_level_colnames)) %>% 
-               mutate_at(vars(vn_weight),funs(rank=rank(-.,ties.method = 'min'))) %>%
-               ungroup()
+              group_by_at(.vars=vars(agg_level_colnames)) %>% 
+              mutate_at(vars(vn_weight),funs(rank=rank(-.,ties.method = 'min'))) %>%
+              ungroup()
             ##now select rank 1 only
             d<-filter(d,rank==1) %>% 
               group_by_at(.vars=vars(agg_level_colnames)) %>% 
               mutate_at(vars("rank"),funs(n_samerank=n())) %>%
               ungroup()
-            #ldt<-as.data.table(ldt)
-            #d<-ldt[,rank:=rank(-cf_level,ties.method = 'min'), by = agg_pcode]
-            #now select rank 1 only
-            #d<-as.data.table(filter(d,rank==1))
-            #d[,n_samerank := .N, by = agg_pcode]
-            #change to no_consensus if two rows are ranked same
+            
             d[d$n_samerank>1,c(vn_agg)]<-"No_Consensus"
             #Get UNIQUE here
             f<-c(agg_level_colnames,vn_agg)
             d<-d %>% select_at(vars(f)) %>% distinct()
+            
+            # ##-------PREVIOUS IMPLEMENTATION_____no consideration of vweight--
+            # # ldt[,vn_col_i]<-ifelse(ldt[,l_col_i]>1 & (ldt[,vn_col_i]=="No answer" |
+            # #                                           ldt[,vn_col_i]=="not sure / do not know"|
+            # #                                           ldt[,vn_col_i]=="Not sure/do not know"|
+            # #                                           ldt[,vn_col_i]=="Unsure"|
+            # #                                           ldt[,vn_col_i]=="Unsure / no answer"|
+            # #                                           ldt[,vn_col_i]=="Do not know"|
+            # #                                           ldt[,vn_col_i]=="Dont know"|
+            # #                                           ldt[,vn_col_i]=="Don’t know"|
+            # #                                           ldt[,vn_col_i]=="don't know"|
+            # #                                           ldt[,vn_col_i]=="dont know/no answer"|
+            # #                                           ldt[,vn_col_i]=="Don’t know/Unsure"|
+            # #                                           ldt[,vn_col_i]=="Dont know / Unsure"|
+            # #                                           ldt[,vn_col_i]=="Dont know / Unsure"|
+            # #                                           ldt[,vn_col_i]=="Do not know/ Unsure"|
+            # #                                           ldt[,vn_col_i]=="Do not know / unsure"|
+            # #                                           ldt[,vn_col_i]=="Dont Know / Unsure"|
+            # #                                           ldt[,vn_col_i]=="do not know  / unsure"|
+            # #                                           ldt[,vn_col_i]=="Do not know/Unsure"),NA,ldt[,vn_col_i])
+            # 
+            # ldt[,vn_col_i]<-ifelse(ldt[,l_col_i]>1 & (ldt[,vn_col_i] %in% dnk_no_ans_label_list),NA,ldt[,vn_col_i])
+            # 
+            # 
+            # ldt<-na.omit(ldt)
+            # #write_csv(ldt,"ldt_b.csv")
+            # # d<-ldt %>% group_by_(agg_level_colnames)%>%
+            # #   mutate(rank=rank(-cf_level,ties.method = 'min')) %>%
+            # #   ungroup()
+            # #for checking
+            # #ldt$cf_level<-ifelse(ldt$agg_pcode=="C4278",10,ldt$cf_level)
+            # 
+            # ##RANK the data [- field name]
+            # 
+            # d<-ldt %>% ungroup() %>% 
+            #    group_by_at(.vars=vars(agg_level_colnames)) %>% 
+            #    mutate_at(vars(vn_weight),funs(rank=rank(-.,ties.method = 'min'))) %>%
+            #    ungroup()
+            # ##now select rank 1 only
+            # d<-filter(d,rank==1) %>% 
+            #   group_by_at(.vars=vars(agg_level_colnames)) %>% 
+            #   mutate_at(vars("rank"),funs(n_samerank=n())) %>%
+            #   ungroup()
+            # #ldt<-as.data.table(ldt)
+            # #d<-ldt[,rank:=rank(-cf_level,ties.method = 'min'), by = agg_pcode]
+            # #now select rank 1 only
+            # #d<-as.data.table(filter(d,rank==1))
+            # #d[,n_samerank := .N, by = agg_pcode]
+            # #change to no_consensus if two rows are ranked same
+            # d[d$n_samerank>1,c(vn_agg)]<-"No_Consensus"
+            # #Get UNIQUE here
+            # f<-c(agg_level_colnames,vn_agg)
+            # d<-d %>% select_at(vars(f)) %>% distinct()
             #d<-unique(d[,c(agg_level_colnames,vn_agg)])
             #JUST INCASE
             if(nrow(d)==0){
@@ -1060,7 +1093,7 @@ for (i_s in 1:nrow(d_agg_sectors)){
                
     #SELECT multiple
     ##multiply 1 or 0 by weight. SUM them and rank later in the process to get SEL ALL or SEL 3 etc
-          }else if (i_aggmethod=="SEL_ALL" | i_aggmethod=="SEL_3" | i_aggmethod=="SEL_4" | i_aggmethod=="SEL1_RALL"){
+          }else if (i_aggmethod=="SEL_ALL" | i_aggmethod=="SEL_3" | i_aggmethod=="SEL_4"){
             d<-"a"
             vn_agg<-names(db)[j]
             #prepare confidence level for weight
@@ -1080,9 +1113,23 @@ for (i_s in 1:nrow(d_agg_sectors)){
               vn_col_i<-which(names(ldt)==vn_agg)#cf_level also
               vn_w_col_i<-which(names(ldt)==vn_weight)
               ldt[,vn_col_i]<-ifelse(ldt[,vn_col_i]=="NA" | ldt[,vn_col_i]=="NaN" | is.nan(ldt[,vn_col_i]),NA,ldt[,vn_col_i])
+              
+              ##
+              ###bring weight for each variable from 'choices' sheet
+              #identify the row and get lookup table
+              d_lk<-choices %>% filter(gname_full_mlabel==vn_agg) %>% 
+                select(gname_full_mlabel,vweight) %>% 
+                mutate_at(.vars=vars(vweight),.funs=funs(as.numeric(as.character(.)))) 
+              #names(d_lk)[1]<-vn_agg
+              vw_col_i<-which(names(d_lk)=="vweight")
+              vw<-as.numeric(d_lk[1,vw_col_i])
+              ##if cannot find in the main databse
+              if(nrow(d_lk)==0){vw<-1}
+              
+              
               #multiply score with the weight
-              ldt$result<-ldt[,vn_w_col_i]*ldt[,vn_col_i] #step included to check - can be avoided
-              ldt[,vn_col_i]<-ldt[,vn_w_col_i]*ldt[,vn_col_i]
+              ldt$result<-ldt[,vn_w_col_i]*ldt[,vn_col_i]*vw #step included to check - can be avoided
+              ldt[,vn_col_i]<-ldt[,vn_w_col_i]*ldt[,vn_col_i]*vw
               ##sum the product
               d<-ldt %>% 
                  ungroup() %>% 
@@ -1104,7 +1151,69 @@ for (i_s in 1:nrow(d_agg_sectors)){
             d<-select_at(d, vars(f))
             #join to the expanding aggregation data
             db_agg<-left_join(db_agg,d,by=agg_level_colnames)
-            rm(list=c("d","f","vn_agg","vn_weight"))
+            rm(list=c("d","f","vn_agg","vn_weight", "vn_gname"))
+  
+####SELECT one is split into multiple columns - similar to select multiple
+##multiply 1 or 0 by weight. SUM them and rank later in the process to get SEL ALL or SEL 3 etc    
+          }else if (i_aggmethod=="SEL1_RALL"){
+            d<-"a"
+            vn_agg<-names(db)[j]
+            #prepare confidence level for weight
+            vn_weight<-vn_cf_level
+            d_weight_i<-conv_num(cf_level)
+            
+            #find rank group
+            vn_gname<-paste0(i_gname,"/")
+            if(str_detect(vn_agg,vn_gname)){
+              #i_vn_cf_level<-vn_cf_level
+              f<-c(agg_level_colnames,vn_weight,vn_agg)
+              ldt<-db %>% 
+                select_at(vars(f)) %>%
+                na.omit() %>% 
+                mutate_at(.vars=vars(vn_weight,vn_agg),.funs=funs(as.numeric(as.character(.)))) 
+              #find the column index for the current aggregation variable
+              vn_col_i<-which(names(ldt)==vn_agg)#cf_level also
+              vn_w_col_i<-which(names(ldt)==vn_weight)
+              ldt[,vn_col_i]<-ifelse(ldt[,vn_col_i]=="NA" | ldt[,vn_col_i]=="NaN" | is.nan(ldt[,vn_col_i]),NA,ldt[,vn_col_i])
+              
+              ##
+              ###bring weight for each variable from 'choices' sheet
+              #identify the row and get lookup table
+              # d_lk<-choices %>% filter(gname_full_mlabel==vn_agg) %>% 
+              #   select(gname_full_mlabel,vweight) %>% 
+              #   mutate_at(.vars=vars(vweight),.funs=funs(as.numeric(as.character(.)))) 
+              # #names(d_lk)[1]<-vn_agg
+              # vw_col_i<-which(names(d_lk)=="vweight")
+              # vw<-as.numeric(d_lk[1,vw_col_i])
+              # ##if cannot find in the main databse
+              # if(nrow(d_lk)==0){vw<-1}
+              vw<-1#assigning 1 - same weight for all variable - just to keep the same structure
+              
+              #multiply score with the weight
+              ldt$result<-ldt[,vn_w_col_i]*ldt[,vn_col_i]*vw #step included to check - can be avoided
+              ldt[,vn_col_i]<-ldt[,vn_w_col_i]*ldt[,vn_col_i]*vw
+              ##sum the product
+              d<-ldt %>% 
+                ungroup() %>% 
+                group_by_at(.vars=vars(agg_level_colnames)) %>% 
+                summarise_at(vars(vn_agg),funs(sum(.,na.rm=TRUE))) %>%
+                ungroup()
+            } else{
+              ###replace everything by NA - create empty dataframe
+              d<-get_empty_dataframe(db,c(agg_level_colnames,vn_agg))
+            }
+            #dummy dataframe if there is no records
+            i_heading<-c(agg_level_colnames, vn_agg)
+            #check if d does not have rows i.e all NA so omitted in previous step, then create empty data frame
+            if(nrow(d)==0){
+              d <- get_empty_dataframe(db, i_heading)
+            }
+            #select data to merge with aggregation frame
+            f<-c(agg_level_colnames,vn_agg)
+            d<-select_at(d, vars(f))
+            #join to the expanding aggregation data
+            db_agg<-left_join(db_agg,d,by=agg_level_colnames)
+            rm(list=c("d","f","vn_agg","vn_weight", "vn_gname"))
   ### weighted average      
           }else if (i_aggmethod=="SEL1_REL"){
               d<-"a"
@@ -1204,13 +1313,11 @@ for (i_s in 1:nrow(d_agg_sectors)){
       
     ###############--------------------------------------------------###################    
     
-      ###############--------SELECT_ONE SPLIT AND RETAIL ALL SCORE TO 0/1------------###################
+      ###############--------SELECT_ONE SPLIT AND RETAIN ALL SCORE TO 0/1------------###################
       db_agg<-select_one_retain_all_score2zo(db_agg,agg_method_all)
       write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step03_SEL_ALL_",agg_sector,".csv"),data_fname),na='NA')
       
-      ###############--------------------------------------------------###################    
-      
-      
+      ###############--------------------------------------------------###################
       
     ###############--------SELECT_MULTIPLE (THREE/FOUR) SCORE TO 0/1------------###################
       db_agg<-select_upto_n_score2zo(db_agg,agg_method_all)
@@ -1257,7 +1364,7 @@ end_time <- as.numeric(as.numeric(Sys.time())*1000, digits=10) # place at end
       
 total_time<-(end_time - start_time)/(1000*60)   # run time (in milliseconds)      
       
-print (paste0("ALL DONE - Time taken : ",total_time))     
+print (paste0("ALL DONE - Time taken : minutes ",total_time))     
       
       
       

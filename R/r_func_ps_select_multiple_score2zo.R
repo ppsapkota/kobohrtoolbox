@@ -20,7 +20,7 @@ select_all_score2zo <- function(data1, agg_method1) {
         for (i_lt in col_ind){
           #i_lt=2
           d_i_lt<-conv_num(data_rec[,i_lt])
-          data_rec[,i_lt]<-ifelse(d_i_lt>1,1,data_rec[,i_lt])
+          data_rec[,i_lt]<-ifelse(d_i_lt>0,1,data_rec[,i_lt])
         }
     }
   }#finish recoding of select one ORDINAL
@@ -29,7 +29,7 @@ select_all_score2zo <- function(data1, agg_method1) {
 NULL
 
 select_one_retain_all_score2zo <- function(data1, agg_method1) {
-  print(paste0("Recode select all values to 1/0"))
+  print(paste0("Recode select one and retain all values to 1/0"))
   ### First we provide attribute label to variable name
   #data.label <- as.data.frame(names(data))
   #data<-as.data.frame(data,stringsAsFactors=FALSE,check.names=FALSE)
@@ -50,7 +50,7 @@ select_one_retain_all_score2zo <- function(data1, agg_method1) {
       for (i_lt in col_ind){
         #i_lt=2
         d_i_lt<-conv_num(data_rec[,i_lt])
-        data_rec[,i_lt]<-ifelse(d_i_lt>1,1,data_rec[,i_lt])
+        data_rec[,i_lt]<-ifelse(d_i_lt>0,1,data_rec[,i_lt])
       }
     }
   }#finish recoding of select one ORDINAL

@@ -125,7 +125,7 @@ for (i_col in scol:ncol(data_num)){
   ###-------ADD VALIDATION RULE---------------##
   
   d$CHECK<-ifelse(d$MAX > d$AVG*2,"CHECK VALUES",NA)
-  d<-filter(d, CHECK=="CHECK VALUES" & MAX>5)
+  #d<-filter(d, CHECK=="CHECK VALUES" & MAX>5)
   
   ###get question label for the column
   ch_s1<-filter(dico,gname==i_fname)
