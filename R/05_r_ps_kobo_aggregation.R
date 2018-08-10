@@ -17,8 +17,8 @@ nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
 #ptm_start<-proc.time()
 start_time <- as.numeric(as.numeric(Sys.time())*1000, digits=10) # place at start
 ##agg geographic level or geographic plus another variable
-flag_agg_level<-"GEO"
-#flag_agg_level<-"GEO_PLUS_VARS"
+#flag_agg_level<-"GEO"
+flag_agg_level<-"GEO_PLUS_VARS"
 
 #List of Do not know and No answer list - collected from choices sheet
 dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
@@ -108,12 +108,12 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
        
       #-Education
        cf_fields<-c("educationg/edu_cfp_me/edu_interv/q3_1modali", "educationg/edu_cfp_me/edu_interv/q3_2type_o")
-       cf_level_edu<-calculate_confidence_level(data,cf_fields,dico) %>% 
-                     rename_("cf_level_edu"="cf_level")
+       cf_level_education<-calculate_confidence_level(data,cf_fields,dico) %>% 
+                     rename_("cf_level_education"="cf_level")
        
        ki_gender_field<-c("educationg/edu_cfp_me/edu_interinf/cpf_edu_ge")
-       ki_gender_edu<-select_at(data, vars(ki_gender_field))
-       names(ki_gender_edu)<-"ki_gender_edu"
+       ki_gender_education<-select_at(data, vars(ki_gender_field))
+       names(ki_gender_education)<-"ki_gender_education"
        
        
        #-NFI-Shelter
@@ -185,7 +185,7 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
             cf_level_equal,
             cf_level_intersector,
             cf_level_cccm,
-            cf_level_edu,
+            cf_level_education,
             cf_level_nfishelter,
             cf_level_fss,
             cf_level_health_mf,
@@ -195,7 +195,7 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
             #ki gender
             ki_gender_intersector,
             ki_gender_cccm,
-            ki_gender_edu,
+            ki_gender_education,
             ki_gender_nfishelter,
             ki_gender_fss,
             ki_gender_health_mf,
@@ -432,7 +432,7 @@ for (i_s in 1:nrow(d_agg_sectors)){
          i_sector<-"intersector"
       }else if (agg_heading=="cf_level_cccm" | agg_heading=="ki_gender_cccm"| agg_heading=="gchoose_th/CCCM"){
          i_sector<-"cccm"
-      }else if (agg_heading=="cf_level_edu" | agg_heading=="ki_gender_edu" | agg_heading=="gchoose_th/Education"){
+      }else if (agg_heading=="cf_level_education" | agg_heading=="ki_gender_education" | agg_heading=="gchoose_th/Education"){
         i_sector<-"education"
       }else if (agg_heading=="cf_level_nfishelter" | agg_heading=="ki_gender_nfishelter" | agg_heading=="gchoose_th/NFI Shelter"){
         i_sector<-"nfishelter"
@@ -460,9 +460,9 @@ for (i_s in 1:nrow(d_agg_sectors)){
          vn_strata<-"ki_gender_cccm"
          
        }else if (i_sector=="education"){
-         vn_cf_level<-"cf_level_edu"
-         cf_level<-db[["cf_level_edu"]]
-         vn_strata<-"ki_gender_edu"
+         vn_cf_level<-"cf_level_education"
+         cf_level<-db[["cf_level_education"]]
+         vn_strata<-"ki_gender_education"
          
        }else if (i_sector=="nfishelter"){
          vn_cf_level<-"cf_level_nfishelter"
