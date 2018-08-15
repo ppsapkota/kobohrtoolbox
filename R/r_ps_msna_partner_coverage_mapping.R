@@ -93,11 +93,11 @@ d_admin4_partners_coverage<-d_admin4_partners_coverage %>%
                             mutate(numPartner= replace_na(numPartner,0))
 
 #export
-openxlsx::write.xlsx(d_merged,paste0("./data/00_Coverage","/MSNA2018_TurkeyXB_coverage_merged.xlsx"),keepNA=FALSE,sheetName="data")
-openxlsx::write.xlsx(d_admin4_partners_coverage,paste0("./data/00_Coverage","/MSNA2018_TurkeyXB_coverage_gap.xlsx"),keepNA=FALSE,sheetName="data")
-openxlsx::write.xlsx(d_partner_num_communities,paste0("./data/00_Coverage","/MSNA2018_TurkeyXB_coverage_summary.xlsx"),keepNA=FALSE,sheetName="data")
-openxlsx::write.xlsx(d_gov_num_communities,paste0("./data/00_Coverage","/MSNA2018_TurkeyXB_coverage_summary_gov.xlsx"),keepNA=FALSE,sheetName="data")
-openxlsx::write.xlsx(d_govpcode_num_communities,paste0("./data/00_Coverage","/MSNA2018_TurkeyXB_coverage_summary_govpcode.xlsx"),keepNA=FALSE,sheetName="data")
+openxlsx::write.xlsx(d_merged,paste0("./data/00_Coverage","/MSNA2018_TurkeyXB_planned_coverage_merged.xlsx"),keepNA=FALSE,sheetName="data")
+openxlsx::write.xlsx(d_admin4_partners_coverage,paste0("./data/00_Coverage","/MSNA2018_TurkeyXB_planned_coverage_gap.xlsx"),keepNA=FALSE,sheetName="data")
+openxlsx::write.xlsx(d_partner_num_communities,paste0("./data/00_Coverage","/MSNA2018_TurkeyXB_planned_coverage_summarybypartner.xlsx"),keepNA=FALSE,sheetName="data")
+openxlsx::write.xlsx(d_gov_num_communities,paste0("./data/00_Coverage","/MSNA2018_TurkeyXB_planned_coverage_summary_gov.xlsx"),keepNA=FALSE,sheetName="data")
+openxlsx::write.xlsx(d_govpcode_num_communities,paste0("./data/00_Coverage","/MSNA2018_TurkeyXB_planned_coverage_summary_govpcode.xlsx"),keepNA=FALSE,sheetName="data")
 
 
 

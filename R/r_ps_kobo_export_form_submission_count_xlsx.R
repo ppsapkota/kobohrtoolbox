@@ -12,7 +12,7 @@ save_fname <- paste0("./data/",kobo_user,"_formlist_details.xlsx")
 d_formlist<-kobohr_getforms_csv(csv_link,kobo_user,Kobo_pw)
 #--remove some fields
 d_formlist<-d_formlist %>% 
-            select(date_created,date_modified, description, downloadable, formid,id_string,last_submission_time,num_of_submissions,title,url,uuid) %>% 
+            select(date_created,date_modified, description, downloadable, formid,id_string,last_submission_time,num_of_submissions,submission_count_for_today,title,url,uuid) %>% 
             filter(downloadable=="True")
 
 d_formlist$download<-"YES"

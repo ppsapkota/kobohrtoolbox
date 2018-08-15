@@ -17,8 +17,8 @@ nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
 #ptm_start<-proc.time()
 start_time <- as.numeric(as.numeric(Sys.time())*1000, digits=10) # place at start
 ##agg geographic level or geographic plus another variable
-#flag_agg_level<-"GEO"
-flag_agg_level<-"GEO_PLUS_VARS"
+flag_agg_level<-"GEO"
+#flag_agg_level<-"GEO_PLUS_VARS"
 
 #List of Do not know and No answer list - collected from choices sheet
 dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
@@ -504,9 +504,11 @@ for (i_s in 1:nrow(d_agg_sectors)){
       ##equal weight columns
       list_eqweight_columns<-c("gchoose_th/Inter Sector",	"gchoose_th/CCCM","gchoose_th/Education",
                                "gchoose_th/NFI Shelter","gchoose_th/Food Security",	"gchoose_th/Health Sector",
-                               "gchoose_th/Early Recovery Sector",	"gchoose_th/Protection"
+                               "gchoose_th/Early Recovery Sector",	"gchoose_th/Protection",
+                               "q6health_s/hki_type","q6health_s/none_hki_t"
                                )
-      
+      ##q6health_s/none_hki_t - equal weight assigned as if No is selected - there will be no confidence level information
+      ## so returned No. to avoid this "q6health_s/none_hki_t" added in the list above.
       if (agg_heading %in% list_eqweight_columns){
           vn_cf_level<-"cf_level_equal"
       }
@@ -1294,7 +1296,6 @@ for (i_s in 1:nrow(d_agg_sectors)){
       db_agg<-data.frame(db_agg,stringsAsFactors=FALSE,check.names=FALSE)    
   
 ####---REFINE AGGREGATION RESULTS---####
-        
     ###############--------ORDINAL SCORE TO VARIABLE NAME------------###################
       db_agg<-assign_ordinal_label_byscore(db_agg,choices)
       write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step02_ORD2LABEL_",agg_sector,".csv"),data_fname),na='NA')
@@ -1308,19 +1309,24 @@ for (i_s in 1:nrow(d_agg_sectors)){
       
       
     ###############--------SELECT_MULTIPLE (ALL) SCORE TO 0/1------------###################
-      db_agg<-select_all_score2zo(db_agg,agg_method_all)
+      db_agg<-select_all_score2zo(db_agg,choices)
       write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step03_SEL_ALL_",agg_sector,".csv"),data_fname),na='NA')
+      
+      #treatment of do not know or no answer using vweight (variable weight)
+      db_agg<-select_all_score2zo_vweight(db_agg,choices)
+      write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step03_SEL_ALL_VWEIGHT",agg_sector,".csv"),data_fname),na='NA')
       
     ###############--------------------------------------------------###################    
     
       ###############--------SELECT_ONE SPLIT AND RETAIN ALL SCORE TO 0/1------------###################
-      db_agg<-select_one_retain_all_score2zo(db_agg,agg_method_all)
+      db_agg<-select_one_retain_all_score2zo(db_agg,choices)
       write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step03_SEL_ALL_",agg_sector,".csv"),data_fname),na='NA')
       
       ###############--------------------------------------------------###################
       
     ###############--------SELECT_MULTIPLE (THREE/FOUR) SCORE TO 0/1------------###################
-      db_agg<-select_upto_n_score2zo(db_agg,agg_method_all)
+      #db_agg<-select_upto_n_score2zo(db_agg,agg_method_all)
+      db_agg<-select_upto_n_score2zo_vweight(db_agg,choices)
       write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step04_SEL3_",agg_sector,".csv"),data_fname),na='NA')
       
     ###############--------------------------------------------------###################

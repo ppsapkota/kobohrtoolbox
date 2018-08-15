@@ -9,8 +9,8 @@ source("./R/r_func_ps_utils.R")
 
 #-------------------------------------#
 nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
-hub<-"NES"
-#hub<-"TurkeyXB"
+#hub<-"NES"
+hub<-"TurkeyXB"
 
 if (hub=="TurkeyXB"){
   #####STEP 2--Merge data---
@@ -113,7 +113,7 @@ for (i_col in scol:ncol(data_num)){
            ungroup()
   i_start<-length(agg_geo_field)+1
   i_end<-ncol(d)
-  
+  #
   d<-d %>% mutate(AVG = rowMeans(.[i_start:i_end], na.rm = TRUE),
                   MIN = do.call('pmin',c(.[,i_start:i_end],na.rm=TRUE)),
                   MAX = do.call('pmax',c(.[,i_start:i_end],na.rm=TRUE))
@@ -121,12 +121,11 @@ for (i_col in scol:ncol(data_num)){
   
   #remove NAN
   d<-rapply(d, f=function(x) ifelse(is.nan(x),NA,x), how="replace" )
-  
+  #
   ###-------ADD VALIDATION RULE---------------##
-  
   d$CHECK<-ifelse(d$MAX > d$AVG*2,"CHECK VALUES",NA)
-  #d<-filter(d, CHECK=="CHECK VALUES" & MAX>5)
-  
+  d<-filter(d, CHECK=="CHECK VALUES" & MAX>5)
+  #------------------------------------#
   ###get question label for the column
   ch_s1<-filter(dico,gname==i_fname)
   q_label<-ch_s1$gname_label[1]
