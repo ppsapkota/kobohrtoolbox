@@ -312,9 +312,7 @@ for (i_s in 1:nrow(d_agg_sectors)){
       #-identify question and aggregation type    
     j<-0 #exclude the first agg_pcode column
     
-    while(j<ncol(db))
-    #while(j<1500)
-    {
+    while(j<ncol(db)){
       j<-j+1
       #j=21 for testing
       #j<-225 for select multiple

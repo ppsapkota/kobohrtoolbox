@@ -10,10 +10,26 @@ source("./R/r_func_ps_utils.R")
 ##-----data preparation---------
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs_all_corrected_v2.xlsx"
-data_fname<-"./Data/100_Aggregation/MSNA2018_data_merged.xlsx"
+#data_fname<-"./Data/100_Aggregation/MSNA2018_data_merged.xlsx"
+#-------------------------------------#
 nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
+#hub<-"NES"
+hub<-"TurkeyXB"
+
+if (hub=="TurkeyXB"){
+  #####STEP 2--Merge data---
+  t_stamp <- format(Sys.time(),"%Y%m%d_%H%M")
+  #
+  xlsx_path<-"./Data/01_Download_CSV/"
+  save_path<-"./Data/00_Coverage/Viz/"
+}else if (hub=="NES"){
+  #####STEP 2--Merge data---
+  t_stamp <- format(Sys.time(),"%Y%m%d_%H%M")
+  #
+  xlsx_path<-"./Data/01_Download_CSV/NES/"
+  save_path<-"./Data/00_Coverage/Viz/NES/"
+}
 ##
-save_path<-"./Data/00_Coverage/Viz/"
 
 #start the clock
 #ptm_start<-proc.time()
@@ -33,10 +49,12 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
 #-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
 #
       print(paste0("Reading data file - ", Sys.time())) 
-      data<-read_excel(data_fname,col_types ="text",na='NA')
+      #data<-read_excel(data_fname,col_types ="text",na='NA')
       #data<-read.csv(data_fname,na="NA",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)
-      data<-as.data.frame(data)
       
+      ###----------merge data-----------------------------------------------------
+      data<- files_merge_xlsx(xlsx_path)
+      data<-as.data.frame(data)
       #read data file to recode
       #read ODK file choices and survey sheet
       survey<-read_excel(nameodk,sheet = "survey",col_types = "text")  
@@ -117,7 +135,7 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
         bar_chart
         #save the viz
         i_viz_save_name<-paste0(save_path,"num_records_sector_partner","_",i,".png")
-        ggsave(i_viz_save_name,plot=bar_chart,dpi=300, scale=1)#width=11.69, height=8.9, units="in",
+        #ggsave(i_viz_save_name,plot=bar_chart,dpi=300, scale=1)#width=11.69, height=8.9, units="in",
         ##print in the file
         print(bar_chart)
     }
@@ -130,7 +148,7 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
         
   ####---------SELECT MULTIPLE--------BAR_CHART  
   #start pdf
-  pdf(paste0(save_path,"bar_charts_select_multiple_questions1",".pdf"))
+  pdf(paste0(save_path,"bar_charts_select_multiple_questions",".pdf"))
   s1_headers<-survey %>% filter(aggmethod=="SEL_ALL"|aggmethod=="SEL_3")
   for (i in 1:nrow(s1_headers)){
     vn_dcol<-s1_headers$gname[i]
@@ -150,7 +168,7 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
       
       d_viz<- d_viz %>% 
               na.omit() %>% 
-              filter(value>0) %>% 
+              filter(value>0 & str_to_lower(value)=="true") %>% 
               group_by_at(vars("key")) %>% 
               summarize(n_value=n()) %>%
               ungroup() %>% 

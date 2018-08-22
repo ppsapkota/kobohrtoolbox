@@ -49,49 +49,67 @@ select_all_score2zo_vweight <- function(data1, choices1) {
     col_ind<-which(str_detect(data_names, paste0(i_headername,"/")) %in% TRUE)
     #Replace only if header is found in the main data table
     if (length(col_ind)>0){
-      #loop through each index
-      for (i_lt in col_ind){
-        #i_lt=2
-        d_i_lt<-as.numeric(as.character(data_rec[,i_lt])) #convert to number
-        data_rec[,i_lt]<-ifelse(d_i_lt>0,1,data_rec[,i_lt])
+        #loop through each index
+        for (i_lt in col_ind){
+          #i_lt=2
+          d_i_lt<-as.numeric(as.character(data_rec[,i_lt])) #convert to number
+          data_rec[,i_lt]<-ifelse(d_i_lt>0,1,data_rec[,i_lt]) ##greater than ZERO - means answered
+        }
+    }
+    
+    ###perform below operation if there are more than one columns
+    ### otherwise simple above operation is enough
+    ### no rowwise ranking is necessary if it has single column
+      if (length(col_ind)>1){
+          ###-----below steps are done to handle do not know or no answer------
+          list_rnk<- select(data_rec, col_ind) %>% as.data.frame()
+          #as.data.frame(data_rec[,col_ind])
+          # convert to numeric first
+          # and then replace 1 by variable weight (vweight - low weight) for
+          # do not know and no answer
+          # this is done to exclude do not know and no answer if any other variable
+          # has an answer
+          # 
+          for (i_list in 1:ncol(list_rnk)){
+            list_rnk[,i_list]<-as.numeric(as.character(list_rnk[,i_list]))
+            ###------if do not know or no answer, substitute by small number
+            var_headername<-names(list_rnk)[i_list]
+            #var_name<-split_headername_get_varname(names(list_rnk)[i_list],"/")
+            ###return to the original name
+            #var_name<-gsub("_","/",var_name)
+            ##replace if it is part of do not know or no answer field
+            #if (var_name %in% dnk_no_ans_label_list){
+            ##get the weight for the variable
+            d_lk<-filter(choices1,gname_full_mlabel==var_headername) #should return one row
+            ##if it is found in the data
+            if (nrow(d_lk)>0){
+              vw<-as.numeric(d_lk$vweight[1])##first row - by default it should return ONE row only
+            }else{vw<-1}
+            #list_rnk[,i_list]<-ifelse(list_rnk[,i_list]==1,vw,list_rnk[,i_list])
+            list_rnk[,i_list]<-list_rnk[,i_list]*vw
+            #}
+          }## all replacement of score is done
+          
+          # to check if list_rnk has one or more fields - if only one field - this one does not work
+          # in case one one columns only, no need for rowwise ranking.
+            d_rank<-t(apply(list_rnk,1,function(x) rank(-x,na.last="keep", ties.method = "min")))
+            d_rank<-as.data.frame(d_rank)
+          # JUST INCASE data has all ZERO in the row,
+          # rowwise rank returns 1. Replace it back to ZERO.
+            #Zero removed - ZERO in the main table is substituted with ZERO
+            for(ir in 1:ncol(d_rank)){
+                d_rank[,ir]<-ifelse(list_rnk[,ir]==0,0,d_rank[,ir])
+            }
+          ##for second or third rank, change to 0
+          ##this works are score is already reduced to 1.
+          ##1 value should get rank 1
+          for (i_lt in 1:ncol(d_rank)){
+            d_rank[,i_lt]<-ifelse(d_rank[,i_lt]>1,0,d_rank[,i_lt])
+          }
+          #Replace values in the main table
+          data_rec[,col_ind]<-d_rank
       }
-      ###-----below steps are done to handle do not know or no answer------
-      list_rnk<-data_rec[,col_ind]
-      # convert to numeric first
-      # and then replace 1 by variable weight (vweight - low weight) for
-      # do not know and no answer
-      # this is done to exclude do not know and no answer if any other variable
-      # has an answer
-      # 
-      for (i_list in 1:ncol(list_rnk)){
-        list_rnk[,i_list]<-as.numeric(as.character(list_rnk[,i_list]))
-        ###------if do not know or no answer, substitute by small number
-        var_headername<-names(list_rnk)[i_list]
-        #var_name<-split_headername_get_varname(names(list_rnk)[i_list],"/")
-        ###return to the original name
-        #var_name<-gsub("_","/",var_name)
-        ##replace if it is part of do not know or no answer field
-        #if (var_name %in% dnk_no_ans_label_list){
-        ##get the weight for the variable
-        d_lk<-filter(choices1,gname_full_mlabel==var_headername) #should return one row
-        if (length(d_lk)>0){
-          vw<-as.numeric(d_lk$vweight[1])
-        }else{vw<-1}
-        #list_rnk[,i_list]<-ifelse(list_rnk[,i_list]==1,vw,list_rnk[,i_list])
-        list_rnk[,i_list]<-list_rnk[,i_list]*vw
-        #}
-      }## all replacement of score is done
-      d_rank<-t(apply(list_rnk,1,function(x) rank(-x,na.last="keep", ties.method = "min")))
-      d_rank<-as.data.frame(d_rank)
-      ##for second or third rank, change to 0
-      for (i_lt in 1:ncol(d_rank)){
-        d_rank[,i_lt]<-ifelse(d_rank[,i_lt]>1,0,d_rank[,i_lt])
-      }
-      #Replace values in the main table
-      data_rec[,col_ind]<-d_rank
-      
-    }##if length >0 i.e. header found in the data
-      
+    ##if length >0 i.e. header found in the data
     }#finish recoding of select one ORDINAL
     return(data_rec)
   }
@@ -127,7 +145,8 @@ select_one_retain_all_score2zo <- function(data1, choices1) {
         data_rec[,i_lt]<-ifelse(d_i_lt>0,1,data_rec[,i_lt])
       }
       ###-----------
-      list_rnk<-data_rec[,col_ind]
+      #list_rnk<-as.data.frame(data_rec[,col_ind])
+      list_rnk<- select(data_rec, col_ind) %>% as.data.frame()
       # convert to numeric first
       # and then replace 1 by variable weight (vweight - low weight) for
       # do not know and no answer
@@ -144,7 +163,7 @@ select_one_retain_all_score2zo <- function(data1, choices1) {
         #if (var_name %in% dnk_no_ans_label_list){
           ##get the weight for the variable
           d_lk<-filter(choices1,gname==i_headername,labelchoice==var_name)
-          if (length(d_lk)>0){
+          if (nrow(d_lk)>0){
             vw<-as.numeric(d_lk$vweight[1])
           }else{vw<-1}
           #list_rnk[,i_list]<-ifelse(list_rnk[,i_list]==1,vw,list_rnk[,i_list])
@@ -208,7 +227,8 @@ select_upto_n_score2zo <- function(data1, agg_method1) {
     #Replace only if header is found in the main data table
     if (length(col_ind)>0){
       #loop through each index
-      list_rnk<-data_rec[,col_ind]
+      #list_rnk<-as.data.frame(data_rec[,col_ind])
+      list_rnk<-select(data_rec, col_ind) %>% as.data.frame()
       for (i_list in 1:ncol(list_rnk)){
         list_rnk[,i_list]<-as.numeric(as.character(list_rnk[,i_list]))
       }
@@ -271,8 +291,8 @@ select_upto_n_score2zo_vweight <- function(data1, choices1) {
     #Replace only if header is found in the main data table
     if (length(col_ind)>0){
       #loop through each index
-      list_rnk<-data_rec[,col_ind]
-      
+      #list_rnk<-as.data.frame(data_rec[,col_ind])
+      list_rnk<-select(data_rec, col_ind) %>% as.data.frame()
       #convert to numeric
       for(i_list in 1:ncol(list_rnk)){
           list_rnk[,i_list]<-as.numeric(as.character(list_rnk[,i_list]))
@@ -285,7 +305,7 @@ select_upto_n_score2zo_vweight <- function(data1, choices1) {
           #if (var_name %in% dnk_no_ans_label_list){
           ##get the weight for the variable
           d_lk<-filter(choices1,gname_full_mlabel==var_headername) #should return one row
-          if (length(d_lk)>0){
+          if (nrow(d_lk)>0){
             vw<-as.numeric(d_lk$vweight[1])
           }else{vw<-1}
           #list_rnk[,i_list]<-ifelse(list_rnk[,i_list]==1,vw,list_rnk[,i_list])
@@ -348,7 +368,9 @@ select_rank_score2rank <- function(data1, agg_method1) {
     #Replace only if header is found in the main data table
     if (length(col_ind)>0){
       #loop through each index
-      list_rnk<-data_rec[,col_ind]
+      #list_rnk<-data_rec[,col_ind]
+      list_rnk<-select(data_rec, col_ind) %>% as.data.frame()
+      
       for (i_list in 1:ncol(list_rnk)){
         list_rnk[,i_list]<-as.numeric(as.character(list_rnk[,i_list]))
       }

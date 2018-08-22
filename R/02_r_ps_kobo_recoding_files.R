@@ -33,7 +33,7 @@ source("./R/r_func_ps_utils.R")
       # data_label<-kobo_encode(data,dico)
       
       #recode all the files in the folder
-      csv_path<-"./Data/04_Ready_for_recode/"
+      csv_path<-"./Data/03_Ready_for_recode/"
       #listfiles<-list.files(csv_path,".csv") #change here
       listfiles<-list.files(csv_path,".xlsx")
       
