@@ -181,8 +181,6 @@ assign_ordinal_NAs_back2var <- function(db_agg1,choices1,data1,agg_level_vars1) 
       kl<-which(names(d_vars)==i_headername)
       kl_r<-which(names(d_vars)=="n_samerank")
       
-      
-      
       # d_vars[,kl]<-ifelse(d_vars[,kl_r]>1 & (d_vars[,kl]=="No answer"|
       #                                        d_vars[,kl]=="not sure / do not know"|
       #                                        d_vars[,kl]=="Not sure/do not know"|
@@ -199,9 +197,14 @@ assign_ordinal_NAs_back2var <- function(db_agg1,choices1,data1,agg_level_vars1) 
       for (i_rp in 1:nrow(d_replace)){
         #i_rp=1
         ##find row number in aggregated data
-        v_search<-paste0(d_replace[i_rp,c(agg_level_vars1)])
-        row_ind<-which(paste0(db_agg_rec[,agg_level_vars1])==v_search)
-        
+        v_search<-paste0(d_replace[i_rp,c(agg_level_vars1)],collapse="")
+        #
+        d_chk_search<-db_agg_rec %>% select_at(vars(agg_level_vars1))
+        #d_chk_search$chk_search<-apply(d_chk_search,1,paste0,collapse="")
+        d_chk_search<-tidyr::unite(d_chk_search,"chk_search", sep="")
+        #
+        #row_ind<-which(paste0(db_agg_rec[,agg_level_vars1],collapse="")==v_search)
+        row_ind<-which(d_chk_search[,c("chk_search")]==v_search)
         #df1$check <- ifelse(is.na(match(paste0(df1$pnr, df1$drug), 
         #                                paste0(df2$pnr, df2$drug))),"No", "Yes")
         col_ind_replace<-which(names(d_replace)==i_headername)

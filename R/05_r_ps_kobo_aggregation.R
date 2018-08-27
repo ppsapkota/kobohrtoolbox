@@ -5,8 +5,6 @@ Last modified: 22 July 2018
 ----'
 rm(list=ls())
 source("./R/91_r_ps_kobo_library_init.R")
-source("./R/r_func_ps_kobo_utils.R")
-source("./R/r_func_ps_utils.R")
 #------------DEFINE Aggregation level----------------
 ##-----data preparation---------
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
@@ -1341,8 +1339,12 @@ for (i_s in 1:nrow(d_agg_sectors)){
        db_agg<-select_rank_score2rank(db_agg,agg_method_all)
        write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step05_RANK_",agg_sector,".csv"),data_fname),na='NA')
       
-    ###############--------------------------------------------------###################    
+    ###############-------------------FIX some Typos-------------------------------###################    
        
+       
+       
+       
+    #######----------------------------------------#############   
        print(paste0("Some clean up - ", Sys.time())) 
        #output NA in the result
        db_agg[is.na(db_agg)] <- 'NA'

@@ -6,7 +6,6 @@ Last modified: 11 July 2017
 
 #load libraries and additional functions from r_ps_kobo_library_init.R
 source("./R/91_r_ps_kobo_library_init.R")
-source("./R/r_ps_kobo_authenticate.R")
 #-----------export formlist in CSV format----------------
 csv_link <- "https://kc.humanitarianresponse.info/api/v1/data.csv"
 save_fname <- paste0("./Data/","formlist_csv.csv")

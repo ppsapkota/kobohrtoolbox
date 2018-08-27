@@ -7,6 +7,9 @@ Last modified: 15 July 2018
 #-----Exporting CSV data to external XLSX file
 #-----Exports data from the multiple forms in the account
 ----'
+
+rm(list=ls())
+source("./R/91_r_ps_kobo_library_init.R")
 #----------
 ##loop through each form and fetch data for individual form and export to CSV
 #read list of forms in the KoBo account - list of forms created with 'kobohr_getforms_csv' function
