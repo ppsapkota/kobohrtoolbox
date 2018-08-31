@@ -1,7 +1,7 @@
 '----
 Developed by: Punya Prasad Sapkota
 Reference: Tool developed by Olivier/REACH
-Last modified: 22 July 2018
+Last modified: 30 August 2018
 ----'
 rm(list=ls())
 source("./R/91_r_ps_kobo_library_init.R")
@@ -9,14 +9,14 @@ source("./R/91_r_ps_kobo_library_init.R")
 ##-----data preparation---------
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs_all_corrected_v2.xlsx"
-data_fname<-"./Data/100_Aggregation/MSNA2018_data_merged.xlsx"
+data_fname<-"./Data/100_Aggregation/MSNA2018_RAW_data_merged_20180830_1818hrs.xlsx"
 nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
 #start the clock
 #ptm_start<-proc.time()
 start_time <- as.numeric(as.numeric(Sys.time())*1000, digits=10) # place at start
 ##agg geographic level or geographic plus another variable
-flag_agg_level<-"GEO"
-#flag_agg_level<-"GEO_PLUS_VARS"
+#flag_agg_level<-"GEO"
+flag_agg_level<-"GEO_PLUS_VARS"
 
 #List of Do not know and No answer list - collected from choices sheet
 dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
@@ -63,6 +63,11 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
       # write_csv(data,gsub(".xlsx","_S1_Step00_ALL_TRANSFER.csv",data_fname))
       # openxlsx::write.xlsx(data,gsub(".xlsx","_S1_Step00_ALL_TRANSFER.xlsx",data_fname),sheetName="data",row.names=FALSE)
       
+######-------------RECODE face to face----------------#####
+      data<-select_one_rename_label(data,dico)
+      write_csv(data,gsub(".xlsx","_S1_Step01_RENAME_LABEL.csv",data_fname),na='NA')
+      
+            
 ###############--------SPLIT SELECT ONE TO MULTIPLE-(SEL_1_RALL--AVG_W_SEL_1_REL---------###################
       data<-split_select_one(data,dico)
       write_csv(data,gsub(".xlsx","_S1_Step01_SPLIT_SEL1.csv",data_fname),na='NA')      
@@ -1300,7 +1305,7 @@ for (i_s in 1:nrow(d_agg_sectors)){
     
       ###############--------ORDINAL REPLACE NAs by Do not know or No answer------------###################
       db_agg<-assign_ordinal_NAs_back2var(db_agg,choices,data,agg_level_colnames)
-      write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step02_ORD2LABEL_",agg_sector,".csv"),data_fname),na='NA')
+      write_csv(db_agg,gsub(".xlsx",paste0("_AGG_Step02_ORD2LABEL_NAs_",agg_sector,".csv"),data_fname),na='NA')
       ###############--------------------------------------------------###################  
       
       

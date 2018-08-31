@@ -78,7 +78,7 @@ NULL
 #     recoded dataset
 
 assign_ordinal_NAs_back2var <- function(db_agg1,choices1,data1,agg_level_vars1) {
-  print(paste0("Recode NAs back to variable name (mainly Do not know or No answer)","--",Sys.time()))
+  print(paste0("Recode ordinal NAs back to variable name (mainly Do not know or No answer)","--",Sys.time()))
   #db_agg1<-db_agg
   #choices1<-dico
   #data1<-data

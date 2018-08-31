@@ -4,13 +4,11 @@ Last modified: 9 August 2018
 ----'
 rm(list=ls())
 source("./R/91_r_ps_kobo_library_init.R")
-source("./R/r_func_ps_kobo_utils.R")
-source("./R/r_func_ps_utils.R")
 #------------DEFINE Aggregation level----------------
 ##-----data preparation---------
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs_all_corrected_v2.xlsx"
-#data_fname<-"./Data/100_Aggregation/MSNA2018_data_merged.xlsx"
+data_fname<-"./Data/03_Ready_for_recode/NES_MSNA_2018_Compiled_Dataset_IRC_Alameen_REACH_NRC_final_20180827_fieldremoved_recode.xlsx"
 #-------------------------------------#
 nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
 #hub<-"NES"
@@ -20,8 +18,8 @@ if (hub=="TurkeyXB"){
   #####STEP 2--Merge data---
   t_stamp <- format(Sys.time(),"%Y%m%d_%H%M")
   #
-  xlsx_path<-"./Data/01_Download_CSV/"
-  save_path<-"./Data/00_Coverage/Viz/"
+  xlsx_path<-"./Data/10_Viz/"
+  save_path<-"./Data/10_Viz/"
 }else if (hub=="NES"){
   #####STEP 2--Merge data---
   t_stamp <- format(Sys.time(),"%Y%m%d_%H%M")
@@ -149,7 +147,7 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
   ####---------SELECT MULTIPLE--------BAR_CHART  
   #start pdf
   pdf(paste0(save_path,"bar_charts_select_multiple_questions",".pdf"))
-  s1_headers<-survey %>% filter(aggmethod=="SEL_ALL"|aggmethod=="SEL_3")
+  s1_headers<-survey %>% filter(qtype=="select_multiple")
   for (i in 1:nrow(s1_headers)){
     vn_dcol<-s1_headers$gname[i]
     vn_title<-s1_headers$label[i]
@@ -168,7 +166,7 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
       
       d_viz<- d_viz %>% 
               na.omit() %>% 
-              filter(value>0 & str_to_lower(value)=="true") %>% 
+              filter(value>0|str_to_lower(value)=="true"|value=="1") %>% 
               group_by_at(vars("key")) %>% 
               summarize(n_value=n()) %>%
               ungroup() %>% 

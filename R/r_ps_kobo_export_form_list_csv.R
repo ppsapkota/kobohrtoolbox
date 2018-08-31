@@ -14,7 +14,7 @@ d_formlist_csv<-as.data.frame(d_formlist_csv)
 d_formlist_csv$download<-"Yes"
 #write_csv(d_formlist_csv,save_fname)
 #export filename as XLSX
-save_fname_xlsx<-paste0("./Data/",kobo_user,"_formlist.xlsx")
+save_fname_xlsx<-paste0("./Data/",kobo_user,"_formlist_.xlsx")
 openxlsx::write.xlsx(d_formlist_csv,save_fname_xlsx,sheetName = "formlist",row.names = FALSE)
 
 

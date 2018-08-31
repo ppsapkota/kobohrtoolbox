@@ -6,9 +6,6 @@ Last modified: 11 July 2017
 
 rm(list=ls())
 source("./R/91_r_ps_kobo_library_init.R")
-source("./R/r_ps_kobo_authenticate.R")
-source("./R/r_func_ps_kobo_utils.R")
-source("./R/r_func_ps_utils.R")
 
 #2----------START ENCODING ALL FILES IN THE FOLDER----------------------------------
   nameodk_recode<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"

@@ -4,9 +4,6 @@ Last modified: 5 August 2018
 ----'
 rm(list=ls())
 source("./R/91_r_ps_kobo_library_init.R")
-source("./R/r_func_ps_kobo_utils.R")
-source("./R/r_func_ps_utils.R")
-
 #-------------------------------------#
 nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
 #hub<-"NES"
@@ -16,8 +13,8 @@ if (hub=="TurkeyXB"){
   #####STEP 2--Merge data---
   t_stamp <- format(Sys.time(),"%Y%m%d_%H%M")
   #
-  xlsx_path<-"./Data/01_Download_CSV/"
-  save_path<-"./Data/00_Coverage/"
+  xlsx_path<-"./Data/10_Viz/"
+  save_path<-"./Data/10_Viz/Check/"
 }else if (hub=="NES"){
   #####STEP 2--Merge data---
   t_stamp <- format(Sys.time(),"%Y%m%d_%H%M")
