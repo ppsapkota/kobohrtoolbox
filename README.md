@@ -1,13 +1,12 @@
-<<<<<<< HEAD
-# kobohr_apitoolbox
-This toolbox contains R-script functions to perform several tasks using API for https://kobo.humanitarianresponse.info/. It supports the use of both older and newer API versions.
+# kobohrtoolbox
+This toolbox contains R-script functions developed to manage KoBo forms, download data, aggregate records and visualize results.  
 
-Functions defined in the file  
-https://github.com/ppsapkota/kobohr_apitoolbox/blob/master/R/r_func_ps_kobo_utils.R
+The form upload to KoBo and data download was performed using API available for https://kobo.humanitarianresponse.info/. It supports both older and newer versions of API.
 
+KoBo API related functions defined in the file  
+https://github.com/ppsapkota/kobohr_apitoolbox/blob/master/R/r_func_ps_kobo_utils.R  
 
-Locate raw file in the github.  
-
+## Loading KoBo API utilities  
 ```r
 library(devtools)
 source_url("https://raw.githubusercontent.com/ppsapkota/kobohr_apitoolbox/master/R/r_func_ps_kobo_utils.R")
