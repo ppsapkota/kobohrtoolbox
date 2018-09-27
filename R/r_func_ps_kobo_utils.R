@@ -49,6 +49,11 @@ kobohr_count_submission <-function(url,u,pw){
   d_content <- rawToChar(rawdata$content)
   d_content <- fromJSON(d_content)
   d_count_submission <- d_content$count
+  ##if not available
+  if (is.null(d_count_submission)){
+    d_count_submission<-0
+  }
+  return(d_count_submission)
 }
 
 #---Upload form in KoBo toolbox--------

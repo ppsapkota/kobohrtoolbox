@@ -1,0 +1,629 @@
+## Convert admin levels to Kobo XLSForms
+### from hdx to choices in XLSForms 
+### By Fuad Hudali , last updated 2017-07-07
+### Modified on 2 July 2018
+### Punya
+
+### load libraries and generic functions
+```{r}
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(stringr))
+suppressPackageStartupMessages(library(readxl))
+suppressPackageStartupMessages(library(openxlsx))
+suppressPackageStartupMessages(library(lubridate))
+
+
+## clear all object from global environment
+rm(list = ls())
+
+## set governoarte pcodes to filter
+#governorates_pcodes <- c("SY02", "SY07", "SY14")
+# governorates_pcodes <- c("SY01", "SY03","SY05")  # Damascus rural damascus and hama
+# governorates_pcodes <- c("SY02", "SY07")    ### Idleb and Aleppo
+
+## load functions
+#source("mygenericfunctions.R")
+ # get timestamp for file names 
+ tstamp <- format(Sys.time(),"_%Y%m%d_%H%M")
+
+#Settings
+ partner_code_name<-"Q_E6"
+#
+Sys.setlocale(category = "LC_ALL",locale = "arabic")
+```
+
+## Steps
+1- download gazetteer from HDX
+2- process it
+3- export to excel
+
+
+
+
+### download gazetteer from hdx and read the sheets
+
+```{r}
+
+#adminurl <- "https://data.humdata.org/dataset/356a63e9-90aa-4b9c-a938-58ef24469c00/resource/69663fc5-0aeb-4a4b-8cac-e58a4d2eb9a9/download/syr_admin_180627.xlsx"
+#download.file(url=adminurl,destfile="syr_admin_180627.xlsx", mode='wb')
+admin_xlsx<-"../admin/syr_admin_20180701.xlsx"
+admin1 <- read_excel(admin_xlsx, sheet = "admin1",col_types = "text")
+admin2 <- read_excel(admin_xlsx, sheet = "admin2", col_types = "text")
+admin3 <- read_excel(admin_xlsx, sheet = "admin3", col_types = "text")
+admin4 <- read_excel(admin_xlsx, sheet = "admin4", col_types = "text")
+neighbourhood <- read_excel(admin_xlsx, sheet = "city_neighbourhoods", col_types = "text")
+region <- read_excel("../kobo_users/regions.xlsx", sheet = "admin1_regions")
+```
+
+### read other datasets
+
+```{r}
+kobo_form <-"../xlsx_form/ochaMSNA2018v9_master.xlsx"
+
+kobo_survey <- read_excel(kobo_form, sheet = "survey", col_types = "text")
+kobo_choices <- read_excel(kobo_form, sheet = "choices",, col_types = "text")
+kobo_settings <- read_excel(kobo_form, sheet = "settings",, col_types = "text")
+
+turkey_coverage <-  read_excel("../kobo_users/MSNA2018_TurkeyXB_coverage_summary_govpcode.xlsx", sheet = "data")
+nes_coverage <- read_excel("../kobo_users/MSNA2018_NES_coverage_summary_govpcode.xlsx", sheet = "data")
+###
+#syr_coverage <- read_excel("../kobo_users/Assessment_Locations_and_Kobo_Users_damascus.xlsx", sheet = "consolidated_list ")
+#jor_coverage <- read_excel("../kobo_users/Assessment_Locations_and_Kobo_Users_jordan.xlsx", sheet = "consolidated_list ")
+
+```
+
+
+
+## process the admin levels to create them in choices format
+
+```{r}
+
+  filter_choices_18 <- function(keep_gov_s){
+    #keep_gov_s <- c("SY02", "SY07")
+  
+  # admin1
+    choices_admin1_s <- admin1 %>%  
+                        filter(admin1Pcode %in% keep_gov_s) %>% 
+                        select(admin1Name_ar,admin1Name_en,admin1Pcode) %>% 
+                        mutate(listname = "govlist") %>% 
+                        arrange(listname,admin1Name_ar)
+  
+  
+    names(choices_admin1_s) <- c("label::Arabic (ar)","label::English (en)","name","list name")
+  
+  #label::Arabic	label::English	name	list name	govlist	distrlist	subdislist	comlist
+  
+  # admin2 
+    admin2_ready_s <- admin2 %>% 
+                      filter(admin1Pcode %in% keep_gov_s) %>% 
+                      select(admin2Name_ar,admin2Name_en,admin2Pcode,admin1Pcode) %>% 
+                      mutate(listname = "distlist", locationfilter = admin1Pcode) %>% 
+                      select(-admin1Pcode) %>% 
+                      arrange(listname,locationfilter,admin2Name_ar)
+  
+    names(admin2_ready_s) <- c("label::Arabic (ar)","label::English (en)","name","list name","locationfilter")
+  
+    choices_admin2_s <- choices_admin1_s %>% 
+                        #mutate(admin1list = NA) %>% 
+                        bind_rows(admin2_ready_s) # %>% 
+  #arrange(`list name`,admin1list,`label::Arabic`)
+  
+  # admin3
+   admin3_ready_s <- admin3 %>% 
+                      filter(admin1Pcode %in% keep_gov_s) %>% 
+                      select(admin3Name_ar,admin3Name_en,admin3Pcode,admin2Pcode) %>% 
+                      mutate(listname = "sublist", admin2list = admin2Pcode ) %>% 
+                      select(-admin2Pcode)%>% 
+                      arrange(listname, admin2list,admin3Name_ar)
+  
+  names(admin3_ready_s) <- c("label::Arabic (ar)","label::English (en)","name","list name","locationfilter")
+  
+  choices_admin3_s <- choices_admin2_s %>% 
+                      bind_rows(admin3_ready_s) # %>% 
+  
+  # choices_admin3 <- admin3_ready %>% bind_rows(choices_admin2) %>% 
+  #                   arrange(`list name`,admin2list,`label::Arabic`)
+  
+  
+  # admin4
+  
+  admin4_ready_s <- admin4 %>% 
+                    filter(admin1Pcode %in% keep_gov_s) %>% 
+                    select(admin4Name_ar,admin4Name_en,admin4Pcode,admin3Pcode) %>% 
+                    mutate(listname = "comlist",admin3list = admin3Pcode) %>% 
+                    select(-admin3Pcode) %>% 
+                    arrange(listname, admin3list,admin4Name_ar)
+  
+  names(admin4_ready_s) <- c("label::Arabic (ar)","label::English (en)","name","list name","locationfilter")
+  
+  choices_admin4_s <- choices_admin3_s %>% 
+                      bind_rows(admin4_ready_s) 
+  
+  # choices_admin4 <- admin4_ready %>% bind_rows(choices_admin3) %>% 
+  #                   arrange(`list name`,admin3list,`label::Arabic`)
+  # neighbourhoods
+  neighbourhood_ready_s <- neighbourhood %>% 
+                           filter(admin1Pcode %in% keep_gov_s) %>%  
+                          select(neibourhoodName_ar,neibourhoodName_en,neibourhoodPcode,admin4Pcode) %>% 
+                          mutate(listname = "nlist",admin4list = admin4Pcode) %>% 
+                          select(-admin4Pcode) %>% 
+                          arrange(listname, admin4list,neibourhoodName_ar)
+  
+ names(neighbourhood_ready_s) <- c("label::Arabic (ar)","label::English (en)","name","list name","locationfilter")
+  
+ if (nrow(neighbourhood_ready_s)==0){
+     df_t<-data.frame(name=character(1))
+     df_t$name<-"Cdummy"
+     neighbourhood_ready_s<-bind_rows(neighbourhood_ready_s,df_t)
+     neighbourhood_ready_s$`list name`<-"nlist"
+ } 
+ 
+ # choices_neighbourhood <- neighbourhood_ready %>% bind_rows(choices_admin4) %>% 
+  #                   arrange(`list name`,admin4list,`label::Arabic`)
+  
+  choices_neighbourhood_s <- choices_admin4_s %>% 
+                             bind_rows(neighbourhood_ready_s) %>% 
+                             select(`list name`,name,`label::English (en)`,`label::Arabic (ar)`,locationfilter) 
+  
+  return(choices_neighbourhood_s)
+}
+
+
+## create the file
+
+
+#fs <- filter_choices_18(governorates_pcodes)
+#writexlsx(fs,paste("kobo_admin_choices",paste(governorates_pcodes, sep = "_", collapse = "_"),tstamp,".xlsx", sep = "_"))
+
+
+
+```
+
+
+## prepare common sheets - choices sheet
+
+
+```{r}
+
+## remove English from choices and rename arabic
+kobo_choices_no_english <- kobo_choices %>% 
+                           #rename(label=`label::Arabic (ar)` ) %>% 
+                           drop_na(`list name`) %>%
+                           select(-contains("::English"))
+                           #select(`list name`,name,label,locationfilter,me) 
+        
+
+kobo_choices_no_admin <- kobo_choices_no_english %>%
+                         filter(!(`list name` %in% c("govlist","distlist","sublist","comlist","nlist")))   ## remove admin1 to 4
+
+
+## remove English from survey and rename arabic
+kobo_survey_no_english <- kobo_survey %>% 
+                          select(-contains("::English")) #%>% 
+                          #rename(label = `label::Arabic (ar)`, hint = `hint::Arabic (ar)`, constraint_message = `constraint_message::Arabic (ar)`)
+
+## rename settings sheet
+kobo_settings_no_english <- kobo_settings #%>% 
+                            #select(-default_language) 
+  
+
+### create regions admin data sets
+regions_pcodes <- region %>%  
+                  group_by(region) %>%
+                  mutate(members = paste0(admin1Pcode, collapse = ",")) %>% 
+                  select(region,members) %>% 
+                  ungroup() %>% 
+                  distinct(region,members) 
+regions_pcodes
+
+# generate region one : Centre
+
+## get pcodes for the governoartes in Centre
+reg1_pcodes <- regions_pcodes %>% 
+               filter(region == "Centre") %>% 
+               select(members)
+#
+g1 <- filter_choices_18(unlist(strsplit(reg1_pcodes$members, ","))) %>% 
+      select(-contains("::English"))
+      #rename(label=`label::Arabic` ) %>% 
+      #select(`list name`, name, label, locationfilter)
+
+## update survey sheet for centre
+kobo_choices_centre <- kobo_choices_no_admin %>% 
+                       bind_rows(g1) 
+                      
+
+## get pcodes for the governoartes in NW
+reg2_pcodes <- regions_pcodes %>% filter(region == "NW") %>% select(members)
+
+# 
+g2 <- filter_choices_18(unlist(strsplit(reg2_pcodes$members, ","))) %>% 
+      select(-contains("::English"))    
+      #rename(label=`label::Arabic` ) %>% 
+      #select(`list name`, name, label, locationfilter)
+  
+## update survey sheet for NW
+kobo_choices_NW <- kobo_choices_no_admin %>%
+                   bind_rows(g2) 
+
+## get pcodes for the governoartes in NE
+reg3_pcodes <- regions_pcodes %>% filter(region == "NES") %>% select(members)
+# 
+g3 <- filter_choices_18(unlist(strsplit(reg3_pcodes$members, ","))) %>% 
+      select(-contains("::English"))    
+  #rename(label=`label::Arabic` ) %>% 
+      #select(`list name`, name, label, locationfilter)
+  
+## update survey sheet for NE
+kobo_choices_NE <- kobo_choices_no_admin %>% bind_rows(g3)
+## get pcodes for the governoartes in South
+reg4_pcodes <- regions_pcodes %>% filter(region == "South") %>% select(members)
+# 
+g4 <- filter_choices_18(unlist(strsplit(reg4_pcodes$members, ","))) %>% 
+      select(-contains("::English"))    
+  #rename(label=`label::Arabic` ) %>% 
+      #select(`list name`,name,label, locationfilter)
+  
+## update survey sheet for South
+kobo_choices_South <- kobo_choices_no_admin %>% bind_rows(g4) 
+
+
+## get pcodes for the governoartes in the coast
+reg5_pcodes <- regions_pcodes %>% filter(region == "Coastal") %>% select(members)
+
+# 
+
+g5 <- filter_choices_18(unlist(strsplit(reg5_pcodes$members, ","))) %>% 
+      select(-contains("::English"))    
+      #rename(label=`label::Arabic` ) %>% 
+      #select(`list name`, name, label, locationfilter)
+  
+## update survey sheet for coast
+kobo_choices_Coastal <- kobo_choices_no_admin %>% bind_rows(g5) 
+
+## south and rural Damascus
+g6 <- filter_choices_18(c("SY12","SY13","SY14","SY03"))%>% 
+      select(-contains("::English"))
+      #rename(label=`label::Arabic` ) %>% 
+      #select(`list name`,name,label,locationfilter)
+
+## update survey sheet for coast
+kobo_choices_jor <- kobo_choices_no_admin %>% bind_rows(g6) 
+
+
+## all governorates
+gall <- filter_choices_18(c("SY01","SY02","SY03","SY04","SY05","SY06","SY07","SY08","SY09","SY10","SY11","SY12","SY13","SY14")) %>%                           
+        select(-contains("::English"))
+        #rename(label=`label::Arabic` ) %>%
+        #select(`list name`,name,label,locationfilter)
+
+kobo_choices_all <- kobo_choices_no_admin %>% bind_rows(gall) 
+
+
+```
+
+
+## functions to help
+```{r}
+## function to create xlsform files
+createxlsx <- function(fname,survey_df, choices_df, settings_df){
+    wb <- openxlsx::createWorkbook()
+    addWorksheet(wb,"survey")
+    addWorksheet(wb,"choices")
+    addWorksheet(wb,"settings")
+    writeData(wb,survey_df,sheet="survey")
+    writeData(wb,choices_df,sheet="choices")
+    writeData(wb,settings_df,sheet="settings")
+    saveWorkbook(wb, file=fname, overwrite = TRUE)
+}
+
+survey_title_ar <- "تقييم الاحتياجات الانسانية"
+## function to change settings sheet
+update_settings <- function(partnercode,set_region_ar, set_region_en){
+  new_setting <- kobo_settings_no_english %>% 
+                  mutate(new_id = paste0("syria_msna2018_",partnercode,"_",set_region_en), 
+                         new_title = paste0(survey_title_ar,"-",paste0(set_region_ar,"_",set_region_en),"_",partnercode)
+                        ) %>% 
+                  select(-starts_with("form")) %>% 
+                  rename(form_title = new_title, form_id = new_id) %>% 
+                  select(form_title,form_id,default_language,submission_url,version)
+ return(new_setting)
+}
+```
+
+### create xls file for hub partners - one per governorate - USE THIS ONE
+```{r}
+#hub_list<- c("turkey", "syria", "jordan","nes")
+hub_list<- c("nes")
+for (hub in hub_list){
+  #
+  print (hub)
+  if(hub=="turkey"){
+    ## process partner data to assign regions to partners
+    coverage <- turkey_coverage
+    ## for each organization create xls files based on regions they ar active in
+    kobo_master_name <- "../xlsx_form/tur/kobo_msna2018"
+  }
+  #---------------
+  if(hub=="syria"){
+    ## process partner data to assign regions to partners
+    coverage <- syr_coverage 
+    ## for each organization create xls files based on regions they ar active in
+    kobo_master_name <- "../xlsx_form/syr/kobo_msna2018"
+  }
+  #--------------
+  if(hub=="jordan"){
+    ## process partner data to assign regions to partners
+    coverage <- jor_coverage 
+    ## for each organization create xls files based on regions they ar active in
+    kobo_master_name <- "../xlsx_form/jor/kobo_msna2018"
+  }
+  
+  #--------------
+  if(hub=="nes"){
+    ## process partner data to assign regions to partners
+    coverage <- nes_coverage 
+    ## for each organization create xls files based on regions they ar active in
+    kobo_master_name <- "../xlsx_form/nes/kobo_msna2018"
+  }
+# ####coverage governorate list
+#   coverage_govlist<- coverage %>% 
+#                      select(starts_with("SY")) %>% 
+#                      names()
+#   
+  #--loop through coverage of each hub
+  coverage[is.na(coverage)]<-0
+  for (i in 1:nrow(coverage)){
+        ## update partner code default in the survey form
+          coverage_names<-names(coverage)
+          org_code<-coverage$organization_code[i] 
+          print (org_code)
+          #Survey - in KoBo file
+          ind_row <- which(kobo_survey_no_english$name==partner_code_name)
+          kobo_survey_no_english_i<-kobo_survey_no_english
+          kobo_survey_no_english_i$default[ind_row]=org_code
+          #----------------------------------#
+          n_govnames<-length(which(str_detect(coverage_names,"SY")))+2
+          for (i_col in 3:n_govnames){
+            i_gov_pcode<-coverage_names[i_col]
+            i_val<-as.numeric(coverage[i,i_col])
+            #get gov name
+            i_gov<-admin1 %>% 
+                   filter(admin1Pcode==i_gov_pcode)
+            #
+            i_gov_name_en<-i_gov$admin1Name_en 
+            i_gov_name_ar<-i_gov$admin1Name_ar
+            #repalce string
+            i_gov_name_en<-i_gov_name_en %>% 
+                           str_replace_all(" ","") %>% 
+                           str_replace_all("-","") %>%
+                           str_replace_all("'","") 
+            i_gov_name_ar<-i_gov_name_ar %>% 
+                           str_replace_all(" ","") %>% 
+                           str_replace_all("-","") %>% 
+                           str_replace_all("'","") 
+              
+            if (i_val>0){
+              #
+              print (paste0(org_code,"----",i_gov_pcode))
+              xlsfilename<-paste0(kobo_master_name,"_",org_code,"_",i_gov_pcode,"_",i_gov_name_en,".xlsx")
+              ##KoBo settings - change
+              #kobo_settings_updated <- update_settings(org_code,i_gov_name_ar,i_gov_name_en)
+              new_id<-paste0("syria_msna2018_",org_code,"_",i_gov_pcode)
+              new_title = paste0(org_code,"_",i_gov_name_ar,"_",survey_title_ar,"_",i_gov_name_en)
+              
+              kobo_settings_updated <- kobo_settings_no_english %>% 
+                                       mutate(form_id = new_id, form_title=new_title) #%>% 
+                                       #select(-starts_with("form")) %>% 
+                                       #rename(form_title = new_title, form_id = new_id) %>% 
+                                       #select(form_title,form_id,default_language,submission_url,version)
+              #prepare filtered location list
+              kobo_choices_gov_pcode<- filter_choices_18(i_gov_pcode) %>% 
+                                       select(-contains("::English"))
+              #combine with other choices list
+              kobo_choices_updated<- kobo_choices_no_admin %>% bind_rows(kobo_choices_gov_pcode) 
+              
+              #SAVE XLSX FORM
+              ## save to excel
+              createxlsx(xlsfilename,kobo_survey_no_english_i,kobo_choices_updated,kobo_settings_updated)
+            }
+          }#each column
+      }#each organisation
+  print (hub)
+}#each hub
+
+```
+
+### create xls file for a partner combining governorates
+```{r}
+partner_list<- c("3106")
+gov_list<-c("SY08","SY09","SY11")
+kobo_master_name <- "../xlsx_form/nes/kobo_msna2018"
+for (partner in partner_list){  #
+      print (partner)
+        ## update partner code default in the survey form
+          org_code<-partner
+          print (org_code)
+          #Survey - in KoBo file
+          ind_row <- which(kobo_survey_no_english$name==partner_code_name)
+          kobo_survey_no_english_i<-kobo_survey_no_english
+          kobo_survey_no_english_i$default[ind_row]=org_code
+          #----------------------------------#
+          xlsfilename <- paste0(kobo_master_name,"_",org_code,".xlsx")
+              ##KoBo settings - change
+              #kobo_settings_updated <- update_settings(org_code,i_gov_name_ar,i_gov_name_en)
+          new_id<-paste0("syria_msna2018","_",org_code)
+          new_title = paste0(org_code,"_",survey_title_ar)
+              
+          kobo_settings_updated <- kobo_settings_no_english %>% 
+                                   mutate(form_id = new_id, form_title=new_title) 
+              #prepare filtered location list
+          kobo_choices_gov_pcode<- filter_choices_18(gov_list) %>% 
+                                   select(-contains("::English"))
+          #combine with other choices list
+          kobo_choices_updated<- kobo_choices_no_admin %>% bind_rows(kobo_choices_gov_pcode) 
+              
+          #SAVE XLSX FORM
+          ## save to excel
+          createxlsx(xlsfilename,kobo_survey_no_english_i,kobo_choices_updated,kobo_settings_updated)
+}#partner
+```
+
+### NOT used create xls file for hub partners
+```{r}
+# hub_list<- c("turkey", "syria", "jordan","nes")
+# for (hub in hub_list){
+#   #
+#   if(hub=="turkey"){
+#     ## process partner data to assign regions to partners
+#     coverage <- turkey_coverage %>% 
+#                 select(NW,NES,Centre,Coastal,South,organization_code) #%>% filter(organization_code != 1729)
+#     ## for each organization create xls files based on regions they ar active in
+#     kobo_master_name <- "./xlsx_form/tur/kobo_msna2018_"
+#   }
+#   #---------------
+#   if(hub=="syria"){
+#     ## process partner data to assign regions to partners
+#     coverage <- syr_coverage %>% 
+#                 select(NW,NES,Centre,Coastal,South,organization_code) #%>% filter(organization_code != 1729)
+#     ## for each organization create xls files based on regions they ar active in
+#     kobo_master_name <- "./xlsx_form/syr/kobo_msna2018_"
+#   }
+#   #--------------
+#   if(hub=="jordan"){
+#     ## process partner data to assign regions to partners
+#     coverage <- jor_coverage %>% 
+#                 select(NW,NES,Centre,Coastal,South,organization_code) #%>% filter(organization_code != 1729)
+#     ## for each organization create xls files based on regions they ar active in
+#     kobo_master_name <- "./xlsx_form/jor/kobo_msna2018_"
+#   }
+#   
+#   #--------------
+#   if(hub=="nes"){
+#     ## process partner data to assign regions to partners
+#     coverage <- nes_coverage %>% 
+#                 select(NW,NES,Centre,Coastal,South,organization_code) #%>% filter(organization_code != 1729)
+#     ## for each organization create xls files based on regions they ar active in
+#     kobo_master_name <- "./xlsx_form/nes/kobo_msna2018_"
+#   }
+# 
+#   #--loop through coverage of each hub
+#   for (i in 1:nrow(coverage)){
+#         ## update partner code default in the survey form
+#           org_code<-coverage$organization_code[i] 
+#           #
+#           ind_row <- which(kobo_survey_no_english$name==partner_code_name)
+#           kobo_survey_no_english_i<-kobo_survey_no_english
+#           kobo_survey_no_english_i$default[ind_row]=org_code
+#          
+#         #if partner works in Centre then create an xls file in centre
+#         if(coverage$Centre[i] == 1){
+#           xlsfilename <- paste0(kobo_master_name,org_code,"_centre",".xlsx")
+#           ## change settings
+#           kobo_settings_updated <- update_settings(org_code,"محافظات الوسط","centre")
+#           kobo_choices_updated<- kobo_choices_centre
+#         }
+#       
+#         if(coverage$NW[i] == 1){
+#           xlsfilename <- paste0(kobo_master_name,org_code,"_NW",".xlsx")
+#           ## change settings
+#           kobo_settings_updated <- update_settings(org_code,"المحافظات في الشمال الغربي","NW")
+#           kobo_choices_updated<- kobo_choices_NW
+#         }
+#       
+#         if(coverage$NES[i] == 1){
+#           xlsfilename <- paste0(kobo_master_name,org_code,"_NES",".xlsx")
+#           ## change settings
+#           kobo_settings_updated <- update_settings(org_code,"المحافظات في الشمال الشرقي","NE")
+#           kobo_choices_updated<- kobo_choices_NE
+#         }
+#       
+#          if(coverage$South[i] == 1){
+#           xlsfilename <- paste0(kobo_master_name,org_code,"_South",".xlsx")
+#           ## change settings
+#           kobo_settings_updated <- update_settings(org_code,"المحافظات الجنوبية","South")
+#           kobo_choices_updated<- kobo_choices_South
+#          }
+#       
+#           if( coverage$Coastal[i] == 1){
+#           xlsfilename <- paste0(kobo_master_name,org_code,"_Coastal",".xlsx")
+#           ## change settings
+#           kobo_settings_updated <- update_settings(org_code,"محافظات الساحل","Coastal")
+#           kobo_choices_updated<- kobo_choices_Coastal
+#           
+#           }
+#           
+#         #save file
+#           ## save to excel
+#           createxlsx(xlsfilename,kobo_survey_no_english_i,kobo_choices_updated,kobo_settings_updated)
+#       }
+# }
+
+```
+
+## prepare NPM
+```{r}
+npm_code <- 1729
+kobo_npm_name <- "../xlsx_form/npm/kobo_msna2018_"
+
+   ind_row <- which(kobo_survey_no_english$name==partner_code_name)
+   kobo_survey_no_english_npm<-kobo_survey_no_english
+   kobo_survey_no_english_npm$default[ind_row]=npm_code
+
+for (i in 1:nrow(admin1)){
+  #if partner works in Centre then create an xls file in centre
+ 
+    xlsfilename <- paste0(kobo_npm_name,npm_code,"_",admin1$admin1RefName[i],".xlsx")
+    ## change settings
+    npm_settings <- update_settings(npm_code,admin1$admin1Name_ar[i],admin1$admin1RefName[i])
+    ## get choices
+    ch <- filter_choices_18(admin1$admin1Pcode[i]) %>% 
+          select(-contains("::English"))
+          #rename(label=`label::Arabic` ) %>% 
+          #select(`list name`, name, label, locationFilter)
+
+## update survey sheet for NW
+    kobo_choices_npm <- kobo_choices_no_admin %>% bind_rows(ch) 
+    ## save to excel
+    createxlsx(xlsfilename,kobo_survey_no_english_npm,kobo_choices_npm,npm_settings)
+}
+
+```
+
+## for Jordan hub
+## Dara,Qneitr Sweida and Rural Damascus
+
+```{r}
+# jor <- jor_coverage %>%  select(NW:organization_code)
+# ## for each organization create xls files based on regions they ar active in
+# kobo_master_name <- "./xlsx_form/jor/kobo_msna2018"
+# 
+# for (i in 1:nrow(jor)){
+#    if(jor$South[i] == 1) {
+#     xlsfilename <- paste0(kobo_master_name,jor$organization_code[i],"_south_rd",".xlsx")
+#     ## change settings
+#     south_settings <- update_settings(jor$organization_code[i],"المحافظات الجنوبية","South")
+#     ## update partner code default
+#     
+#     ind_row <- which(kobo_survey_no_english$name==partner_code_name)
+#     kobo_survey_no_english_jor<-kobo_survey_no_english
+#     kobo_survey_no_english_jor$default[ind_row]=jor_coverage$organization_code[i]
+#     ## save to excel
+#     createxlsx(xlsfilename,kobo_survey_no_english_jor,kobo_choices_jor,south_settings)
+#    }
+# }
+```
+
+## create a form with all admin lists - ARABIC ONLY
+```{r}
+xlsfilename_all <- "../xlsx_form/kobo_syr_msna_2019_all.xlsx"
+# update setteing 
+new_id<-paste0("syria_msna2018","_",survey_title_ar,"_","all")
+new_title = paste0("syria_msna2018","_",survey_title_ar,"_","all")
+              
+kobo_settings_updated <- kobo_settings_no_english %>% 
+                         mutate(form_id = new_id, form_title=new_title)
+## save to Excel
+createxlsx(xlsfilename_all,kobo_survey_no_english,kobo_choices_all,kobo_settings_updated)
+```

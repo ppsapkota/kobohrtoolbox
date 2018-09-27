@@ -6,14 +6,13 @@ Last modified: 18 July 2018
 **********************************
 #----Exporting data to external CSV file
 ----'
-rm(list=ls())
 source("./R/91_r_ps_kobo_library_init.R")
+main_dir<-getwd()
+
 #library("googlesheets")
 t_stamp <- format(Sys.time(),"%Y%m%d_%H%M")
 #hub<-"NES"
 hub<-"TurkeyXB"
-
-
 xlsx_path<-"./Data/10_Viz/"
 save_path<-"./Data/10_Viz/Summary/"
 parter_list_f<-"./Data/MSNA2018_TurkeyXB_coverage_summary_govpcode.xlsx"
@@ -22,7 +21,7 @@ admin_fname<-"./Data/Admin/syr_admin_20180701.xlsx"
 ###----------run below-----------------------------------------------------
 #d_merged<- as.data.frame(files_merge_xlsx(xlsx_path))
 
-d_merged<-read_excel("./Data/10_Viz/MSNA2018_RAW_data_merged_20180830_1818hrs.xlsx", col_types = "text")
+d_merged<-read_excel("./Data/10_Viz/MSNA2018_RAW_data_merged_20180831_1900hrs_FINAL_ALL_SECTORS.xlsx", col_types = "text", sheet=)
 
 d_merged[is.na(d_merged)] <- 'NA'
 ###--partner name--
@@ -65,62 +64,62 @@ saveWorkbook(wb, file=paste0(save_path,"msna2018_data_coverage",".xlsx"),overwri
 data<-d_merged
 #Enumerators
 admin_fields<-c("Q_E/Q_E4","admin1pcode","admin2pcode","admin3pcode","admin4pcode","neighpcode","Q_E/Q_E5","Q_E/Q_E6","Q_M/admin1","Q_M/admin2","Q_M/admin3","Q_M/admin4","Q_M/neighborho")
-rename_fields<-c(admin_fields,c("ki_gender","ki_age","sector"))
+rename_fields<-c(admin_fields,c("cfp_gender","cfp_age","modality" ,"sector"))
 #intersector
-sector_fields<-c("I_S_Q/Q_K1/Q_K1_A","I_S_Q/Q_K1/Q_K1_B")
+sector_fields<-c("I_S_Q/Q_K1/Q_K1_A","I_S_Q/Q_K1/Q_K1_B","I_S_Q/Q_K1/Q_K1_C")
 data_ki_is<-data %>% select(admin_fields,sector_fields) %>% mutate(sector="intersector")
 names(data_ki_is)<-rename_fields
 ##cccm
-sector_fields<-c("ccm_group/cfp_ccm_gr/cpf_ccm_ge","ccm_group/cfp_ccm_gr/cpf_ccm_ag")
+sector_fields<-c("ccm_group/cfp_ccm_gr/cpf_ccm_ge","ccm_group/cfp_ccm_gr/cpf_ccm_ag", "ccm_group/cfp_ccm_gr/cpf_ccm_mo")
 data_ki_cccm<-data %>% select(admin_fields,sector_fields) %>% mutate(sector="cccm")
 names(data_ki_cccm)<-rename_fields
 #cccm_ki_gender<-data$`ccm_group/cfp_ccm_gr/cpf_ccm_ge`
 #cccm_ki_age<-data$`ccm_group/cfp_ccm_gr/cpf_ccm_ag`
 
 #edu
-sector_fields<-c("educationg/edu_cfp_me/edu_interinf/cpf_edu_ge","educationg/edu_cfp_me/edu_interinf/cpf_edu_ag")
+sector_fields<-c("educationg/edu_cfp_me/edu_interinf/cpf_edu_ge","educationg/edu_cfp_me/edu_interinf/cpf_edu_ag","educationg/edu_cfp_me/edu_interv/q3_1modali")
 data_ki_edu<-data %>% select(admin_fields,sector_fields) %>% mutate(sector="education")
 names(data_ki_edu)<-rename_fields
 #edu_ki_gender<-data$`educationg/edu_cfp_me/edu_interinf/cpf_edu_ge`
 #edu_ki_age<-data$`educationg/edu_cfp_me/edu_interinf/cpf_edu_ag`
 
 #nfi
-sector_fields<-c("nfi_group/nfi_cfp_gr/nfi_cfp_ge","nfi_group/nfi_cfp_gr/nfi_cfp_ag")
+sector_fields<-c("nfi_group/nfi_cfp_gr/nfi_cfp_ge","nfi_group/nfi_cfp_gr/nfi_cfp_ag", "nfi_group/nfi_cfp_gr/nfi_cfp_mo")
 data_ki_nfishelter<-data %>% select(admin_fields,sector_fields) %>% mutate(sector="nfishelter")
 names(data_ki_nfishelter)<-rename_fields
 #nfishelter_ki_gender<-data$`nfi_group/nfi_cfp_gr/nfi_cfp_ge`
 #nfishelter_ki_age<-data$`nfi_group/nfi_cfp_gr/nfi_cfp_ag`
 
 #fss
-sector_fields<-c("q5food_sec/food51_com/k_5_1gende","q5food_sec/food51_com/k_5_2age_o")
+sector_fields<-c("q5food_sec/food51_com/k_5_1gende","q5food_sec/food51_com/k_5_2age_o", "q5food_sec/food51_com/k_5_3modal")
 data_ki_fss<-data %>% select(admin_fields,sector_fields) %>% mutate(sector="fss")
 names(data_ki_fss)<-rename_fields
 #fss_ki_gender<-data$`q5food_sec/food51_com/k_5_1gende`
 #fss_ki_age<-data$`q5food_sec/food51_com/k_5_2age_o`
 
 #health medical professional
-sector_fields<-c("q6health_s/qcomm_h_p/k_6_1gende","q6health_s/qcomm_h_p/k_6_2age_o")
+sector_fields<-c("q6health_s/qcomm_h_p/k_6_1gende","q6health_s/qcomm_h_p/k_6_2age_o","q6health_s/qcomm_h_p/k_6_3modal")
 data_ki_health_mf<-data %>% select(admin_fields,sector_fields) %>% mutate(sector="health (medical professional)")
 names(data_ki_health_mf)<-rename_fields
 #health_mf_ki_gender<-data$`q6health_s/qcomm_h_p/k_6_1gende`
 #health_mf_ki_age<-data$`q6health_s/qcomm_h_p/k_6_2age_o`
 
 #health non medical professional
-sector_fields<-c("q6health_s/qcomm_h_np/k_6_1_1gen","q6health_s/qcomm_h_np/k_6_2_1age")
+sector_fields<-c("q6health_s/qcomm_h_np/k_6_1_1gen","q6health_s/qcomm_h_np/k_6_2_1age", "q6health_s/qcomm_h_np/k_6_3_1mod")
 data_ki_health_nonmf<-data %>% select(admin_fields,sector_fields) %>% mutate(sector="health (non medical professional)")
 names(data_ki_health_nonmf)<-rename_fields
 #health_nonmf_ki_gender<-data$`q6health_s/qcomm_h_np/k_6_1_1gen`
 #health_nonmf_ki_age<-data$`q6health_s/qcomm_h_np/k_6_2_1age`
 
 #erl
-sector_fields<-c("q7early_re/qcommunity_fp2/k_7_1gende","q7early_re/qcommunity_fp2/k_7_2age_o")
+sector_fields<-c("q7early_re/qcommunity_fp2/k_7_1gende","q7early_re/qcommunity_fp2/k_7_2age_o", "q7early_re/qcommunity_fp2/k_7_3modal")
 data_ki_erl<-data %>% select(admin_fields,sector_fields) %>% mutate(sector="erl")
 names(data_ki_erl)<-rename_fields
 #erl_ki_gender<-data$`q7early_re/qcommunity_fp2/k_7_1gende`
 #erl_ki_age<-data$`q7early_re/qcommunity_fp2/k_7_2age_o`
 
 #protection
-sector_fields<-c("q8protecti/qcommunity_fp3/k_8_1gende","q8protecti/qcommunity_fp3/k_8_2age_o")
+sector_fields<-c("q8protecti/qcommunity_fp3/k_8_1gende","q8protecti/qcommunity_fp3/k_8_2age_o","q8protecti/qcommunity_fp3/k_8_3modal")
 data_ki_protection<-data %>% select(admin_fields,sector_fields) %>% mutate(sector="protection")
 names(data_ki_protection)<-rename_fields
 #protection_ki_gender<-data$`q8protecti/qcommunity_fp3/k_8_1gende`
@@ -154,7 +153,7 @@ data_ki<-rename(data_ki,"admin5"="Q_M/neighborho")
 
 #data_ki<-left_join(data_ki,d_admin4,by=c("admin4"="admin4Pcode"))
 ### Save data KI
-openxlsx::write.xlsx(data_ki,paste0(save_path,"msna2018_data_ki_info","_",t_stamp,".xlsx"),sheetName="msna2018_data_ki_info",row.names=FALSE)
+openxlsx::write.xlsx(data_ki,paste0(save_path,"msna2018_data_cfp_info","_",t_stamp,".xlsx"),sheetName="msna2018_data_cfp_info",row.names=FALSE)
 
 ####---------PUSH to Google Sheet------------
 # #gs_auth()

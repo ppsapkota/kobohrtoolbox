@@ -8,7 +8,6 @@ Last modified: 15 July 2018
 #-----Exports data from the multiple forms in the account
 ----'
 
-rm(list=ls())
 source("./R/91_r_ps_kobo_library_init.R")
 #----------
 ##loop through each form and fetch data for individual form and export to CSV
@@ -31,7 +30,8 @@ for (i in 1:nrow(d_formlist)){
   stat_url<- paste0('https://kc.humanitarianresponse.info/api/v1/stats/submissions/',d_formlist$id[i],'?group=a')
   d_count_subm <- kobohr_count_submission (stat_url,kobo_user,Kobo_pw)
   #download data only if submission
-  if (!is.null(d_count_subm)){
+  #if (!is.null(d_count_subm)){
+  if (d_count_subm>0){
       d_rawi<-NULL
       #Example "https://kc.humanitarianresponse.info/api/v1/data/79489.csv"
       d_rawi<-kobohr_getdata_csv(d_formlist$url[i],kobo_user,Kobo_pw)

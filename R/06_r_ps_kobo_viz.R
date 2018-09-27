@@ -4,11 +4,14 @@ Last modified: 9 August 2018
 ----'
 rm(list=ls())
 source("./R/91_r_ps_kobo_library_init.R")
+
+library(shiny)
+library(shinydashboard)
 #------------DEFINE Aggregation level----------------
 ##-----data preparation---------
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs_all_corrected_v2.xlsx"
-data_fname<-"./Data/03_Ready_for_recode/NES_MSNA_2018_Compiled_Dataset_IRC_Alameen_REACH_NRC_final_20180827_fieldremoved_recode.xlsx"
+data_fname<-"./Data/10_Viz/TurkeyXB_MSNA2018_data_merged_8files_2104_2112_2126_1600hrsV1.xlsx"
 #-------------------------------------#
 nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
 #hub<-"NES"
@@ -73,7 +76,6 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
       #agg_level_colnames<-agg_geo_level
       #db_all$ki_gender<-NA
     
-
         ## aggregation is done at admin pcode level
         agg_level_colnames<-c(agg_geo_level)
         ##assign data for aggregation
@@ -86,6 +88,7 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
   #from survey - select select one
   #start pdf
   pdf(paste0(save_path,"bar_charts_select_one_questions",".pdf"))
+  dev.off()
   s1_headers<-survey %>% filter(aggmethod=="SEL_1")
   for (i in 1:nrow(s1_headers)){
     vn_dcol<-s1_headers$gname[i]
@@ -98,38 +101,21 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
         d_viz<- d_viz %>% 
                 na.omit() %>% 
                 group_by_at(vars(vn_dcol)) %>% 
-                summarize(n_value=n()) %>% 
-                arrange(desc(n_value)) %>% 
+                summarize(freq_count=n()) %>% 
+                mutate(freq_percentage=round(freq_count/sum(freq_count)*100)) %>% 
+                arrange(desc(freq_count)) %>% 
                 ungroup()
         
         names(d_viz)[1]<-"variables"
-        
         ##Alternate method
-        #f_count <- table(d_viz)
-        x_i<-"variables"
-        y_i<-"n_value"
+        #f_count <- as.data.frame(table(d_viz))
+        x_i<-"variables" #column name
+        y_i<-"freq_percentage" #column name
+        fill_i<-"freq_percentage"
         title_i<- paste0(str_wrap(vn_title, width=50),"\n",vn_dcol)
+        #d_i<-d_viz
         #--plot--
-        p<-ggplot(data=d_viz, aes_string(x=x_i, y=y_i, fill=y_i))+
-           geom_bar(stat="identity", position=position_dodge(0.8),fill="#9ebcda",colour="#9ebcda", width = 0.5)
-        
-        bar_chart<-p+
-          theme(legend.position = "none",
-                axis.title.y=element_blank(),
-                axis.ticks.y=element_blank(),
-                axis.text.x=element_blank(),
-                axis.ticks.x=element_blank(),
-                plot.background = element_rect(fill =NA,colour = NA),
-                panel.border = element_blank(),
-                panel.grid.major = element_blank(),
-                panel.grid.minor = element_blank()
-                )+
-          #geom_text(aes_string(y="n_value",label=y_i),hjust=-0.5, vjust=0.5, size = 3, color = "grey20")+
-          geom_text(aes_string(y=0,label=y_i),hjust=-0.5, vjust=0.5, size = 3, color = "grey20")+
-          scale_x_discrete(labels=function(x){str_wrap(x,width = 50)})+
-          coord_flip()+
-          labs(title=title_i, y="number of records")
-        
+        bar_chart<-draw_barchart(d_viz,x_i,y_i,fill_i =y_i, title_i)
         bar_chart
         #save the viz
         i_viz_save_name<-paste0(save_path,"num_records_sector_partner","_",i,".png")
@@ -137,7 +123,6 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
         ##print in the file
         print(bar_chart)
     }
-    
   } 
   #end pdf
   dev.off()
@@ -168,38 +153,23 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
               na.omit() %>% 
               filter(value>0|str_to_lower(value)=="true"|value=="1") %>% 
               group_by_at(vars("key")) %>% 
-              summarize(n_value=n()) %>%
+              summarize(freq_count=n()) %>%
+              mutate(freq_percentage=round(freq_count/sum(freq_count)*100)) %>% 
               ungroup() %>% 
-              arrange(desc(n_value)) 
+              arrange(desc(freq_count)) 
             
       names(d_viz)[1]<-"variables"
       ###print only of it has records
       if (nrow(d_viz)>0){
               ##Alternate method
               #f_count <- table(d_viz)
-              x_i<-"variables"
-              y_i<-"n_value"
+              x_i<-"variables" #column name
+              y_i<-"freq_percentage" #column name
+              fill_i<-"freq_percentage"
               title_i<- paste0(str_wrap(vn_title, width=50),"\n",vn_dcol)
               #--plot--
-              p<-ggplot(data=d_viz, aes_string(x=x_i, y=y_i, fill=y_i))+
-                geom_bar(stat="identity", position='dodge',fill="#9ebcda",colour="#9ebcda", width = 0.8)
-              
-              bar_chart<-p+
-                theme(legend.position = "none",
-                      axis.title.y=element_blank(),
-                      axis.ticks.y=element_blank(),
-                      axis.text.x=element_blank(),
-                      axis.ticks.x=element_blank(),
-                      plot.background = element_rect(fill =NA,colour = NA),
-                      panel.border = element_blank(),
-                      panel.grid.major = element_blank(),
-                      panel.grid.minor = element_blank()
-                )+
-                #geom_text(aes_string(y="n_value",label=y_i),hjust=-0.5, vjust=0.5, size = 3, color = "grey20")+
-                geom_text(aes_string(y=0,label=y_i),hjust=-0.5, vjust=0.5, size = 3, color = "grey20")+
-                scale_x_discrete(labels=function(x){str_wrap(x,width = 50)})+
-                coord_flip()+
-                labs(title=title_i, y="number of records")
+              #--plot--
+              bar_chart<-draw_barchart(d_viz,x_i,y_i,fill_i=y_i, title_i)
               
               bar_chart
               #save the viz

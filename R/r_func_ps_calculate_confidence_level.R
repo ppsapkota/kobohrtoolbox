@@ -10,6 +10,8 @@ calculate_confidence_level<-function(data_i, fields_i, dico_i){
               mutate(cf_level=rowSums(.[,1:ncol(dc_ki_info)],na.rm=TRUE)) %>% 
               mutate(cf_level=ifelse(is.nan(cf_level)|cf_level==0,NA,cf_level)) %>% 
               select(cf_level)
+#
+ return(d_cf_level)  
 }
 
 

@@ -15,7 +15,7 @@ install.packages("openxlsx") #'write xlsx'
 #install.packages("data.table")
 
 install.packages("devtools")
-#devtools::install_github("tidyverse/ggplot2")
+devtools::install_github("tidyverse/ggplot2")
 
 install.packages("sf")
 install.packages("sp")

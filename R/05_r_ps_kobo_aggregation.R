@@ -8,9 +8,15 @@ source("./R/91_r_ps_kobo_library_init.R")
 #------------DEFINE Aggregation level----------------
 ##-----data preparation---------
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
-#data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs_all_corrected_v2.xlsx"
-data_fname<-"./Data/100_Aggregation/MSNA2018_RAW_data_merged_20180830_1818hrs.xlsx"
+#data_fname<-"./Data/100_Aggregation/SAMPLE_FOR_TESTING_MSNA2018_RAW_data_merged.xlsx"
+
+##FINAL DATA
+data_fname<-"./Data/100_Aggregation/MSNA2018_RAW_data_merged_20180831_1900hrs_FINAL_ALL_SECTORS.xlsx"
 nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
+
+###FOR WORST CASE
+#nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method_protection_wcase.xlsx"
+
 #start the clock
 #ptm_start<-proc.time()
 start_time <- as.numeric(as.numeric(Sys.time())*1000, digits=10) # place at start
@@ -238,7 +244,9 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
       #agg_level_colnames<-c(agg_geo_level, "ki_gender") #ki_gender is not in the data - need to add before proceeding
       #agg_level_colnames<-agg_geo_level
       #db_all$ki_gender<-NA
-      
+  
+    agg_sector_list<-c("protection")
+       
 ### SOME NOTES
   # depending on aggregation level selected (flag_agg_level)- assign the sector and loop through it
   # sector<-'all' is not the best representation of what is being done in this code.
@@ -263,6 +271,11 @@ for (i_s in 1:nrow(d_agg_sectors)){
           ###if for all sectors
           ## aggregation is done at admin pcode level
           agg_level_colnames<-c(agg_geo_level)
+          
+          ##PROTECTION OVERWRITING
+          #agg_sector<-"protection"
+          
+          
         }else{
           ##get the col name depending on selected sector
           ###for individual sector aggregation is done at 
@@ -522,6 +535,16 @@ for (i_s in 1:nrow(d_agg_sectors)){
       if (flag_agg_level=="GEO_PLUS_VARS" && i_sector != agg_sector && i_sector!="NA"){
           i_aggmethod<-"DROP"
       }
+      
+      
+      ####DO it for PROTECTION ONLY
+      ###Both case
+      if (i_sector != "protection" && i_sector!="NA"){
+        i_aggmethod<-"DROP"
+      }
+      
+      
+      
       
 ####---THE AGGREGATION STARTS----------------------------------------------####      #
       print(paste0("Rows: ",nrow(db_agg)," - Running - ","Column: ",j," - ",agg_heading," - AGGREGATION - ",i_aggmethod))
