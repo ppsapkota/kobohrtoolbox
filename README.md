@@ -88,7 +88,31 @@ for (permission_i in permission_list){
 #   'validate_submissions',
 # )
 ```
-=======
-# kobohrtoolbox
-R packages to extract data from the https://kc.humanitarianresponse.info/. The library is built on API v1.
->>>>>>> c23499c55e2afe15c556040a41154e57857389b2
+
+## Additional utility functions
+### Loading KoBo API utilities  
+```r
+library(devtools)
+source_url("https://raw.githubusercontent.com/ppsapkota/kobohrtoolbox/master/R/r_func_ps_utils.R")
+```  
+
+### Merge multiple xlsx files in a folder
+```r
+xlsx_path<-"folder path where xlsx files are saved"
+d_merged<- as.data.frame(files_merge_xlsx(xlsx_path))
+```
+### Convert ALL CSV files in a folder to XLSX
+```r
+d_path = "path of csv file"
+##-----------covert files to csv------------------
+filenames=list.files(path=d_path, full.names=TRUE, pattern = "*.csv")
+db <- lapply(filenames, function(x){readCSVwriteXLSX(x)})
+```
+
+
+
+
+
+
+
+

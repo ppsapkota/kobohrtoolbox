@@ -2,7 +2,7 @@
 Developed by: Punya Prasad Sapkota
 Last modified: 5 August 2018
 ----'
-rm(list=ls())
+
 source("./R/91_r_ps_kobo_library_init.R")
 #-------------------------------------#
 nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"

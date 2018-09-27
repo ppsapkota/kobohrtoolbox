@@ -1,15 +1,13 @@
-rm(list = ls())
-
 source("./R/91_r_ps_kobo_library_init.R")
 
-f_coverage_fname<-"C:\\Dropbox (OCHA)\\D-IM and Assessment\\HNO\\HNO_2019\\MSNA 2018\\Turkey partners coverage\\WoS_Consolidated\\MSNA2018_PartnerCoverage_TurkeyXB_and_WoS_20180627_Coverage assigned_DRAFT.xlsx"
+f_coverage_fname<-"WoS_20180627_Coverage assigned_DRAFT.xlsx"
 f_admin4<-"./Data/Admin/syr_admin_180627.xlsx"
-f_save_location <- "C:\\Dropbox (OCHA)\\D-IM and Assessment\\HNO\\HNO_2019\\MSNA 2018\\Turkey partners coverage\\WoS_Consolidated\\Coverage_all_partners_individual\\\\"
+f_save_location <- "partners_individual"
 
 #read sheets
 data_admin4<-read_excel(f_admin4,sheet="admin4")
 data_coverage<-read_excel(f_coverage_fname,sheet="WoS_ConsolidatedData")
-data_coverage<- rename(data_coverage,"Initially_Proposed_Coverage"="Coverd")
+data_coverage<- rename(data_coverage,"Initially_Proposed_Coverage"="Covered")
 #read file for the list of organisation and kobo user name
 data_org_list <- data_coverage %>% 
                  filter (Hub=="Turkey XB") %>% 

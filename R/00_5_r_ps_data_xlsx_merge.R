@@ -5,8 +5,6 @@ Last modified: 12 July 2017
 ************************************
 #-----Merge multiple XLSX files
 ----'
-
-rm(list=ls())
 source("./R/91_r_ps_kobo_library_init.R")
 #--------Merge multiple xlsx files---------------------------
 xlsx_path<-paste0("./Data/06_Final_ready_to_merge")
