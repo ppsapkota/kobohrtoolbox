@@ -88,7 +88,7 @@ for (permission_i in permission_list){
 #   'validate_submissions',
 # )
 ```
-
+---
 ## Additional utility functions
 ### Loading KoBo API utilities  
 ```r
@@ -108,11 +108,57 @@ d_path = "path of csv file"
 filenames=list.files(path=d_path, full.names=TRUE, pattern = "*.csv")
 db <- lapply(filenames, function(x){readCSVwriteXLSX(x)})
 ```
+---
+## Create KoBo XLSform dictionary  
+Add additional fields in 'survey' sheet.  
 
+<table>
+<tr><td>additional field name</td><td>description</td><td>Data Value</td></tr>
+<tr><td>recodevar</td><td>Recode variable or not</td><td>YES, NO</td></tr>
+<tr><td>aggmethod</td><td>Aggregation method</td><td>NA, CONCAT, SUM, RANK3</td></tr>
+<tr><td>qrankscore</td><td>Rank order and score for weighting</td><td>1=third rank, 2, 3=first rank</td></tr>
+<tr><td>qrankgroup</td><td>Group identifier for the ranking variables</td><td> </td></tr>
+<tr><td>sector</td><td>Sector name</td><td> </td></tr>
+<tr><td>group</td><td>Group name to identify list of field names in the data which belongs together</td><td> </td></tr>
+</table>
+Add following additional fields in 'choices' sheet.  
+<table>
+<tr><td>additional field name</td><td>description</td><td>Data values</td></tr>
+<tr><td>vtype</td><td>Variable type</td><td>cat, ord</td></tr>
+<tr><td>vscore</td><td>Variable Score for weighting</td><td>numbers and NA</td></tr>
+<tr><td>vweight</td><td>Variable weight</td><td>specially for Do not know and No answer - low weight is assigned so that it does not affect the aggregation incase of mixed responses. Weight for 'No answer' is higher than half of 'Do not know'.</td></tr>
+<tr><td>rename_label</td><td>new variable name for renaming</td><td></td></tr>
+</table>
+---
 
+## Create KoBo XLSForm dictionary for recoding and aggregation later in the process  
+```r
+xlsform_name<-"./xlsform/ochaMSNA2018v9_master.xlsx"
+form_file_name <- xlsform_name
+#create dictionary from the ODK/XLSFORM design form
+kobo_dico(xlsform_name)
+#saves file with the same name (suffix added) in the same folder
+```
+The output XLSForm file with _agg_method is used in subsequent processing.  
+## Recoding data
+Use __kobo_encode__ finction to recode select_one and select_multiple questions to label. This is down in KoBo data file downloaded as XML values (CSV or XLSX format with "/" separated group header included in the field names).
 
-
-
-
-
-
+```r
+#use the xlsform file saved after calling function kobo_dico.
+nameodk<-"./xlsform/myxlsform_agg_method.xlsx"
+#read ODK file choices and survey sheet
+dico<-read_excel(nameodk,sheet="choices",col_types ="text")
+dico<-data.frame(dico,stringsAsFactors = FALSE,check.names = FALSE)
+#recode an excel file and save it in the folder
+csv_path<-"./Data/03_Ready_for_recode/"
+fname<-"./Data/03_Ready_for_recode/XXXX.xlsx"
+save_fname<-gsub("\\.xlsx", "_recode.xlsx",paste0(csv_path,fname))
+data=as.data.frame(read_excel(paste0(csv_path,fname),na="NA",col_types ="text"))
+print(paste0("Start Encoding file - ", fname, ' - Start time =', Sys.time()))
+#Call recode function
+#fuction defined in file
+# https://github.com/ppsapkota/kobohrtoolbox/blob/master/R/r_func_ps_recode_from_odk.R
+data_label<-kobo_encode(data,dico)
+#save recoded file
+openxlsx::write.xlsx(data_label,save_fname,sheetName="data", row.names = FALSE)
+```
