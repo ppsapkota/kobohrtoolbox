@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # kobohr_apitoolbox
 This toolbox contains R-script functions to perform several tasks using API for https://kobo.humanitarianresponse.info/. It supports the use of both older and newer API versions.
 
@@ -88,3 +89,7 @@ for (permission_i in permission_list){
 #   'validate_submissions',
 # )
 ```
+=======
+# kobohrtoolbox
+R packages to extract data from the https://kc.humanitarianresponse.info/. The library is built on API v1.
+>>>>>>> c23499c55e2afe15c556040a41154e57857389b2
