@@ -108,11 +108,3 @@ d_path = "path of csv file"
 filenames=list.files(path=d_path, full.names=TRUE, pattern = "*.csv")
 db <- lapply(filenames, function(x){readCSVwriteXLSX(x)})
 ```
-
-
-
-
-
-
-
-
