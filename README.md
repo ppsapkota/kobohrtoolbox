@@ -154,7 +154,7 @@ dico<-data.frame(dico,stringsAsFactors = FALSE,check.names = FALSE)
 csv_path<-"./Data/03_Ready_for_recode/"
 fname<-"./Data/03_Ready_for_recode/XXXX.xlsx"
 save_fname<-gsub("\\.xlsx", "_recode.xlsx",paste0(csv_path,fname))
-data=as.data.frame(read_excel(paste0(csv_path,fname),na="NA",col_types ="text"))
+data<-as.data.frame(read_excel(paste0(csv_path,fname),na="NA",col_types ="text"))
 print(paste0("Start Encoding file - ", fname, ' - Start time =', Sys.time()))
 #Call recode function
 #fuction defined in file
