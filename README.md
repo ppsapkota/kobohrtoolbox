@@ -111,6 +111,7 @@ db <- lapply(filenames, function(x){readCSVwriteXLSX(x)})
 
 ## Create KoBo XLSform dictionary  
 Add additional fields in 'survey' sheet.  
+
 | additional field name | description                                                                   | Data Value                    |
 |:----------------------|:------------------------------------------------------------------------------|:------------------------------|
 | recodevar             | Recode variable or not                                                        | YES, NO                       |
@@ -120,7 +121,9 @@ Add additional fields in 'survey' sheet.
 | sector                | Sector name                                                                   |                               |
 | group                 | Group name to identify list of field names in the data which belongs together |                               |
 
+
 Add following additional fields in 'choices' sheet.  
+
 | additional field name | description                    | Data values                                                                                                                                                                                         |
 |:----------------------|:-------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | vtype                 | Variable type                  | cat, ord                                                                                                                                                                                            |
