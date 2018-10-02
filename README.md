@@ -88,7 +88,7 @@ for (permission_i in permission_list){
 #   'validate_submissions',
 # )
 ```
----
+
 ## Additional utility functions
 ### Loading KoBo API utilities  
 ```r
@@ -108,7 +108,7 @@ d_path = "path of csv file"
 filenames=list.files(path=d_path, full.names=TRUE, pattern = "*.csv")
 db <- lapply(filenames, function(x){readCSVwriteXLSX(x)})
 ```
----
+
 ## Create KoBo XLSform dictionary  
 Add additional fields in 'survey' sheet.  
 
@@ -140,8 +140,8 @@ kobo_dico(xlsform_name)
 #saves file with the same name (suffix added) in the same folder
 ```
 The output XLSForm file with _agg_method is used in subsequent processing.  
-## Recoding data
-Use __kobo_encode__ finction to recode select_one and select_multiple questions to label. This is down in KoBo data file downloaded as XML values (CSV or XLSX format with "/" separated group header included in the field names).
+## Recoding data  
+Use __kobo_encode__ finction to recode select_one and select_multiple questions to label. This is down in KoBo data file downloaded as XML values (CSV or XLSX format with "/" separated group header included in the field names).  
 
 ```r
 #use the xlsform file saved after calling function kobo_dico.
