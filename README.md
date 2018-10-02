@@ -88,7 +88,7 @@ for (permission_i in permission_list){
 #   'validate_submissions',
 # )
 ```
----
+
 ## Additional utility functions
 ### Loading KoBo API utilities  
 ```r
@@ -108,7 +108,7 @@ d_path = "path of csv file"
 filenames=list.files(path=d_path, full.names=TRUE, pattern = "*.csv")
 db <- lapply(filenames, function(x){readCSVwriteXLSX(x)})
 ```
----
+
 ## Create KoBo XLSform dictionary  
 Add additional fields in 'survey' sheet.  
 
