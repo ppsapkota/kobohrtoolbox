@@ -111,22 +111,22 @@ db <- lapply(filenames, function(x){readCSVwriteXLSX(x)})
 
 ## Create KoBo XLSform dictionary  
 Add additional fields in 'survey' sheet.  
-additional field name|description|Data Value  
--------------------|-------------|-------------
-recodevar|Recode variable or not|YES, NO
-aggmethod|Aggregation method|NA, CONCAT, SUM, RANK3
-qrankscore|Rank order and score for weighting|1=third rank, 2, 3=first rank
-qrankgroup|Group identifier for the ranking variables|
-sector|Sector name|
-group|Group name to identify list of field names in the data which belongs together|
+| additional field name | description                                                                   | Data Value                    |
+|:----------------------|:------------------------------------------------------------------------------|:------------------------------|
+| recodevar             | Recode variable or not                                                        | YES, NO                       |
+| aggmethod             | Aggregation method                                                            | NA, CONCAT, SUM, RANK3        |
+| qrankscore            | Rank order and score for weighting                                            | 1=third rank, 2, 3=first rank |
+| qrankgroup            | Group identifier for the ranking variables                                    |                               |
+| sector                | Sector name                                                                   |                               |
+| group                 | Group name to identify list of field names in the data which belongs together |                               |
 
 Add following additional fields in 'choices' sheet.  
-additional field name|description|Data values
--------------|------------|------------
-vtype|Variable type|cat, ord
-vscore|Variable Score for weighting|numbers and NA
-vweight|Variable weight|specially for Do not know and No answer - low weight is assigned so that it does not affect the aggregation incase of mixed responses. Weight for 'No answer' is higher than half of 'Do not know'.
-rename_label|new variable name for renaming|
+| additional field name | description                    | Data values                                                                                                                                                                                         |
+|:----------------------|:-------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| vtype                 | Variable type                  | cat, ord                                                                                                                                                                                            |
+| vscore                | Variable Score for weighting   | numbers and NA                                                                                                                                                                                      |
+| vweight               | Variable weight                | specially for Do not know and No answer - low weight is assigned so that it does not affect the aggregation incase of mixed responses. Weight for 'No answer' is higher than half of 'Do not know'. |
+| rename_label          | new variable name for renaming |                                                                                                                                                                                                     |
 
 ## Create KoBo XLSForm dictionary for recoding and aggregation later in the process
 __kobo_dico__ function is used to create a xlsform dictionary file which mainly generates field headers matching with the KoBo downloaded CSV data file.  
