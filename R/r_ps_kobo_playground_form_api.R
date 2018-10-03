@@ -7,6 +7,10 @@ source ("./R/r_func_ps_kobo_utils.R")
 kobo_user<- ""
 Kobo_pw<-""
 
+####---------A PLAY GROUND---------------#####
+####----DO NOT USE--------------####
+####____________MAY NOT BE FINAL____________#####
+
 #upload KoBo form
 #curl -X POST -F xls_file=@/path/to/form.xls https://kobo.humanitarianresponse.info/api/v1/forms
 #POST(url, body = upload_file("mypath.txt"))

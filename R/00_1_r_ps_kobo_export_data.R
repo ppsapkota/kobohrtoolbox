@@ -27,7 +27,8 @@ for (i in 1:nrow(d_formlist)){
   #URL format
   #check the submission first
   d_count_subm<-0
-  stat_url<- paste0('https://kc.humanitarianresponse.info/api/v1/stats/submissions/',d_formlist$id[i],'?group=a')
+  #stat_url<- paste0("https://kc.humanitarianresponse.info/api/v1/stats/submissions/",d_formlist$id[i],"?group=a")
+  stat_url<- paste0(kc_server_url,"api/v1/stats/submissions/",d_formlist$id[i],"?group=a")
   d_count_subm <- kobohr_count_submission (stat_url,kobo_user,Kobo_pw)
   #download data only if submission
   #if (!is.null(d_count_subm)){

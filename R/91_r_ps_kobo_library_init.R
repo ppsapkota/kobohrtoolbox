@@ -37,6 +37,7 @@ source("./R/r_func_ps_calculate_confidence_level.R")
 source("./R/r_func_ps_empty_dataframe.R")
 source("./R/r_func_ps_recode_numeric_odk.R")
 source("./R/r_func_ps_rename_label_odk.R")
+source("./R/r_global_settings.R")
 path <- Sys.getenv("PATH")
 Sys.setenv("PATH" = paste(path, "C:/Rtools/bin", sep = ";"))
 
