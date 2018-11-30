@@ -250,9 +250,82 @@ draw_barchart_stacked<-function(d_i,x_i,y_i,fill_i, title_i){
 
 #####---------------------DATA-------------------------#####
 ###----------------------------------------------------###
+agg_data_select_one<-function(db,data_geo_level,agg_geo_level,vn_gname){
+  ##get the data
+  d_viz_so<-db %>% select_at(vars(data_geo_level,agg_geo_level,vn_gname))
+  
+  #get total records
+  ##Alternate method
+  total_responses<-d_viz_so %>%
+                   na.omit() %>% 
+                   select_at(vars(data_geo_level)) %>% 
+                   distinct() %>% 
+                   nrow()
+  
+  ##total for viz
+  d_viz_total<- d_viz_so %>%
+                select_at(vars(data_geo_level,vn_gname)) %>% 
+                na.omit() %>% 
+                group_by_at(vars(vn_gname)) %>% 
+                summarize(freq_count=n()) %>%
+                mutate(total_responses=total_responses) %>% 
+                mutate(freq_percentage=round(freq_count/total_responses,2)*100) %>% 
+                arrange(desc(freq_count)) %>% 
+                ungroup() 
+  
+  i_colind<-which(names(d_viz_total)==vn_gname)
+  names(d_viz_total)[i_colind]<-"variables"
+  
+  
+  #For GEO level aggregation
+  d_agg_total_responses<- d_viz_so %>% 
+                          na.omit() %>%
+                          select_at(vars(data_geo_level,agg_geo_level)) %>% 
+                          distinct() %>% 
+                          group_by_at(vars(agg_geo_level)) %>% 
+                          summarize(total_responses=n()) %>% 
+                          arrange(desc(total_responses)) %>% 
+                          ungroup()
+  
+  #
+  d_viz_agg<- d_viz_so %>%
+              select_at(vars(data_geo_level,agg_geo_level, vn_gname)) %>% 
+              na.omit() %>% 
+              group_by_at(vars(agg_geo_level, vn_gname)) %>% 
+              summarize(freq_count=n()) %>% 
+              left_join(d_agg_total_responses,by=agg_geo_level) %>% 
+              mutate(freq_percentage=round(freq_count/total_responses,2)*100) %>% 
+              arrange(desc(freq_count)) %>% 
+              ungroup() 
+  
+  i_colind<-which(names(d_viz_agg)==vn_gname)
+  names(d_viz_agg)[i_colind]<-"variables"
+  #
+  x_i<-"variables" #column name
+  y_i<-"freq_percentage" #column name
+  fill_i<-"freq_percentage"
+  #title_i<- paste0(str_wrap(vn_title, width=50),"\n",vn_dcol)
+  title_i<- paste0(str_wrap(vn_title, width=50))
+  #
+  #--plot--
+  bar_chart <- draw_barchart_percentage (d_viz_total,x_i,y_i,fill_i, title_i)
+  bar_chart
+  
+  
+  #bar_chart_facet<-draw_barchart_facet_percentage(d_viz,x_i,y_i,fill_i=y_i, title_i,facet_i = facet_col_name)
+  #bar_chart_facet
+  #
+  doc<-body_add_gg(doc,value=bar_chart,style = "Normal")
+  doc<-body_add_table(doc,as.data.frame(total_responses), style = "table_template")
+  ##print in the file
+}
+
+
+
+###-----------------------FACET-----------------------------###
 agg_data_facet_select_one<-function(db,data_geo_level,agg_geo_level,facet_col_name, vn_gname){
   ##get the data
-  d_viz_so<-db %>% select_at(vars(data_geo_level,agg_level_colnames,vn_gname))
+  d_viz_so<-db %>% select_at(vars(data_geo_level,agg_geo_level,facet_col_name,vn_gname))
   
   #get total records
   ##Alternate method
@@ -300,7 +373,97 @@ agg_data_facet_select_one<-function(db,data_geo_level,agg_geo_level,facet_col_na
   ##print in the file
 }
 
-###----------------------------------------------------###
+###----------------TOTAL SELECT MULTIPLE------------------------------------###
+agg_data_select_multiple<-function(db,data_geo_level,agg_geo_level,vn_gname){
+  ##frequency
+  f<-c(data_geo_level,agg_geo_level)
+  col_ind_f<-which(names(db) %in% f)
+  #
+  col_ind_i<-which(str_detect(names(db),vn_gname))
+  
+  d_viz_sm<-db %>% select(col_ind_f, col_ind_i)
+  #
+  d_viz<-d_viz_sm %>% gather(key="key",value="value",(length(col_ind_f)+1):ncol(d_viz_sm))
+  d_viz$key<-str_remove_all(d_viz$key,vn_gname)
+  d_viz$key<-gsub("_","/",d_viz$key)
+  
+  ###calculate number of responses
+  total_responses<- d_viz %>% 
+                    na.omit() %>%
+                    filter(value>0|str_to_lower(value)=="true"|value=="1") %>%  
+                    select_at(vars(data_geo_level)) %>% 
+                    distinct() %>% 
+                    nrow()
+  
+  ##total responses by facet
+  d_agg_total_responses<- d_viz %>% 
+                            na.omit() %>%
+                            filter(value>0|str_to_lower(value)=="true"|value=="1") %>%  
+                            select_at(vars(data_geo_level, agg_geo_level)) %>% 
+                            distinct() %>% 
+                            group_by_at(vars(agg_geo_level)) %>% 
+                            summarize(total_responses=n()) %>% 
+                            arrange(desc(total_responses)) %>% 
+                            ungroup()
+  ### Total aggregation
+  d_viz_total<- d_viz %>% 
+                    na.omit() %>% 
+                    filter(value>0|str_to_lower(value)=="true"|value=="1") %>% 
+                    group_by_at(vars("key")) %>% 
+                    summarize(freq_count=n()) %>% 
+                    mutate(freq_percentage=round(freq_count/total_responses,2)*100) %>% 
+                    ungroup() %>% 
+                    arrange(desc(freq_count)) 
+  i_colind<-which(names(d_viz_total)=="key")
+  names(d_viz_total)[i_colind]<-"variables"
+  
+  
+  ### Aggregation by GEO level
+  f<-c(agg_geo_level)
+  ##BY AGGREGATION LEVEL
+  d_viz_agg<- d_viz %>% 
+              na.omit() %>% 
+              filter(value>0|str_to_lower(value)=="true"|value=="1") %>% 
+              group_by_at(vars(f,"key")) %>% 
+              summarize(freq_count=n()) %>% 
+              left_join(d_agg_total_responses,by=f) %>% 
+              mutate(freq_percentage=round(freq_count/total_responses,2)*100) %>% 
+              ungroup() %>% 
+              arrange(desc(freq_count)) 
+  
+  
+  d_viz_agg_freq_count<-d_viz_agg %>% select(-freq_percentage) %>% spread(key=key,value=c(freq_count),fill=0)
+  #d_viz_agg_freq_count<-d_viz_agg_freq_count %>% left_join(d_total_responses_agg_level,by=f)
+  #
+  d_viz_agg_freq_percentage<-d_viz_agg %>% select(-freq_count) %>% spread(key=key,value=c(freq_percentage),fill=0)
+  #d_viz_agg_freq_percentage<-d_viz_agg_freq_percentage %>% left_join(d_total_responses_agg_level,by=f)
+  
+  #
+  i_colind<-which(names(d_viz_agg)=="key")
+  names(d_viz_agg)[i_colind]<-"variables"
+  
+  ###print only of it has records
+  if (nrow(d_viz_agg)>0){
+    ##Alternate method
+    #f_count <- table(d_viz)
+    x_i<-"variables" #column name
+    y_i<-"freq_percentage" #column name
+    fill_i<-"freq_percentage"
+    title_i<- paste0(str_wrap(vn_title, width=35))
+    
+    #--plot--
+    ###FACETED
+    bar_chart<-draw_barchart_percentage(d_viz_total,x_i,y_i,fill_i=y_i, title_i)
+    bar_chart
+    #
+    doc<-body_add_gg(doc,value=bar_chart,style = "Normal")
+    doc<-body_add_table(doc,as.data.frame(total_responses), style = "table_template")
+  }
+}
+
+
+
+###----------------FACET------------------------------------###
 agg_data_facet_select_multiple<-function(db,data_geo_level,agg_geo_level,facet_col_name, vn_gname){
   ##frequency
   f<-c(data_geo_level,agg_geo_level,facet_col_name)
@@ -377,7 +540,93 @@ agg_data_facet_select_multiple<-function(db,data_geo_level,agg_geo_level,facet_c
   }
 }
 
-###----------------------------------------------------###
+###-------------------TOTAL SELET ONE RANK---------------------------------###
+agg_data_select_one_rank<-function(db,data_geo_level,agg_geo_level, vn_gname){
+  ##frequency
+  f<-c(data_geo_level, agg_geo_level)
+  col_ind_f<-which(names(db) %in% f)
+  #
+  col_ind_i<-which(str_detect(names(db),vn_gname))
+  
+  d_viz_raw<-db %>% select(col_ind_f, col_ind_i)
+  #
+  d_viz<-d_viz_raw %>% gather(key="key",value="value",(length(col_ind_f)+1):ncol(d_viz_raw))
+  d_viz$key<-str_remove_all(d_viz$key,vn_gname)
+  d_viz$key<-gsub("_","/",d_viz$key)
+  
+  ##RANK to SCORE
+  d_viz<- d_viz %>% 
+          mutate(value=as.numeric(value)) %>% 
+          mutate(value_score=(max(value, na.rm = TRUE)-value+1))
+  
+  #
+  ###calculate number of responses
+  total_responses<- d_viz %>% 
+                    na.omit() %>%
+                    select_at(vars(data_geo_level)) %>% 
+                    distinct() %>% 
+                    nrow()
+  
+  
+  ##total responses by GEO LEVEL
+  d_total_responses_agg<- d_viz %>% 
+                            na.omit() %>%
+                            select_at(vars(data_geo_level, agg_geo_level)) %>% 
+                            distinct() %>% 
+                            group_by_at(vars(agg_geo_level)) %>% 
+                            summarize(total_responses=n()) %>% 
+                            arrange(desc(total_responses)) %>% 
+                            ungroup()
+  ###make data ready for bar chart - TOTAL
+  
+  d_viz_total<- d_viz %>% 
+                na.omit() %>% 
+                group_by_at(vars("key")) %>% 
+                summarize(value_score=sum(value_score)) %>% 
+                mutate(avg_value=round(value_score/total_responses,1)) %>%
+                ungroup() %>% 
+                arrange(desc(avg_value)) 
+  #
+  i_colind<-which(names(d_viz_total)=="key")
+  names(d_viz_total)[i_colind]<-"variables"
+  ###make data ready for bar chart - AGG GEO LEVEL
+  f<-c(agg_geo_level)
+  d_viz_agg<- d_viz %>% 
+              na.omit() %>% 
+              group_by_at(vars(f,"key")) %>% 
+              summarize(value_score=sum(value_score)) %>% 
+              left_join(d_total_responses_agg,by=f) %>% 
+              mutate(avg_value=round(value_score/total_responses,1)) %>%
+              ungroup() %>% 
+              arrange(desc(avg_value)) 
+  
+  d_viz_agg_avg_score<-d_viz_agg %>% select(-value_score,total_responses) %>% spread(key=key,value=c(avg_value),fill=0)
+  
+  #
+  i_colind<-which(names(d_viz_agg)=="key")
+  names(d_viz_agg)[i_colind]<-"variables"
+  
+  ###print only of it has records
+  if (nrow(d_viz_agg)>0){
+    ##Alternate method
+    #f_count <- table(d_viz)
+    x_i<-"variables" #column name
+    y_i<-"avg_value" #column name
+    fill_i<-"avg_value"
+    title_i<- paste0(str_wrap(vn_title_full, width=50))
+    
+    ###FACETED
+    bar_chart<-draw_barchart_value(d_viz_total,x_i,y_i,fill_i=y_i, title_i)
+    bar_chart
+    #
+    doc<-body_add_gg(doc,value=bar_chart,style = "Normal")
+    doc<-body_add_table(doc,as.data.frame(total_responses), style = "table_template")
+  }
+}
+
+
+
+###-------------------FACETED SELET ONE RANK---------------------------------###
 agg_data_facet_select_one_rank<-function(db,data_geo_level,agg_geo_level,facet_col_name, vn_gname){
   ##frequency
   f<-c(data_geo_level,facet_col_name, agg_geo_level)
