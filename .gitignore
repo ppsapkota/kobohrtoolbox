@@ -3,3 +3,7 @@
 .RData
 .Ruserdata
 .httr-oauth
+Authenticate
+Data
+xlsform/backup
+R/00_1_r_ps_kobo_export_data_NES.R

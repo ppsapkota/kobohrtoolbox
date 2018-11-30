@@ -29,8 +29,6 @@ Last Modified: 23 May 2018
 #---USAGE---version 2
 #-----KoBo data Access using new KoBo API (KPI)
 #-----https://kobo.humanitarianresponse.info/assets/
-#returns list of forms assets as a dataframe
-#url <- "https://kc.humanitarianresponse.info/api/v1/data.csv"
 
 kobohr_kpi_upload_xlsform <-function(url,kobo_form_xlsx,u,pw){
   #STEP 1 ---importing a form---

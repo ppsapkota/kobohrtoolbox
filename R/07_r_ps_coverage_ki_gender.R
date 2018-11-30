@@ -21,7 +21,7 @@ admin_fname<-"./Data/Admin/syr_admin_20180701.xlsx"
 ###----------run below-----------------------------------------------------
 #d_merged<- as.data.frame(files_merge_xlsx(xlsx_path))
 
-d_merged<-read_excel("./Data/10_Viz/MSNA2018_RAW_data_merged_20180831_1900hrs_FINAL_ALL_SECTORS.xlsx", col_types = "text", sheet=)
+d_merged<-read_excel("./Data/100_Aggregation/MSNA2018_RAW_data_merged_20180831_1900hrs_FINAL_ALL_SECTORS.xlsx", col_types = "text", sheet="MSNA2018_data_raw")
 
 d_merged[is.na(d_merged)] <- 'NA'
 ###--partner name--
