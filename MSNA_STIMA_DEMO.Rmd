@@ -1,0 +1,155 @@
+---
+title: "MSNA_STIMA_DEMO"
+output: html_document
+---
+
+
+# Load libraries
+```{r}
+#load libraries and additional functions from r_ps_kobo_library_init.R
+source("./R/91_r_ps_kobo_library_init.R")
+
+```
+
+# Some settings
+```{r}
+####----set global variables ----------
+kobo_server_url<-"https://kobo.humanitarianresponse.info/"
+kc_server_url<-"https://kc.humanitarianresponse.info/"
+
+```
+
+# Export list of forms from the KoBo Account
+```{r}
+#-----------export formlist in CSV format----------------
+#csv_link <- "https://kc.humanitarianresponse.info/api/v1/data.csv"
+csv_link <- paste0(kc_server_url,"api/v1/data.csv")
+save_fname <- paste0("./Data/","formlist_csv.csv")
+d_formlist_csv<-kobohr_getforms_csv(csv_link,kobo_user,Kobo_pw)
+d_formlist_csv<-as.data.frame(d_formlist_csv)
+d_formlist_csv$download<-"Yes"
+#write_csv(d_formlist_csv,save_fname)
+#export filename as XLSX
+save_fname_xlsx<-paste0("./Data/",kobo_user,"_formlist_demo.xlsx")
+openxlsx::write.xlsx(d_formlist_csv,save_fname_xlsx,sheetName = "formlist",row.names = FALSE)
+```
+
+# Prepare KoBo Form dictionary
+```{r}
+
+#1---------------------CREATE DICTIONARY---------------------
+#####--ONE TIME RUN---------
+#xlsform_name<-"./xlsform/kobo_master_v7.xlsx"
+xlsform_name<-"./xlsform/ochaMSNA2018v9_master.xlsx"
+#xlsform_name<-"./xlsform/kobo_master_v7_protection_wcase.xlsx"
+form_file_name <- xlsform_name
+#create dictionary from the ODK/XLSFORM design form
+kobo_dico(xlsform_name)
+```
+
+# Download data from the KoBo form
+```{r}
+form_id_list<-c(252997,253041,254136)
+for (form_id in form_id_list){
+  url<-paste0(kc_server_url,"api/v1/data/",form_id,".csv")
+  #url<-"https://kc.humanitarianresponse.info/api/v1/data/252978.csv"
+  d_count_subm<-0
+  #stat_url<- paste0("https://kc.humanitarianresponse.info/api/v1/stats/submissions/",d_formlist$id[i],"?group=a")
+  stat_url<- paste0(kc_server_url,"api/v1/stats/submissions/",form_id,"?group=a")
+  d_count_subm <- kobohr_count_submission (stat_url,kobo_user,Kobo_pw)
+  #download data only if submission
+  #if (!is.null(d_count_subm)){
+  if (d_count_subm>0){
+      d_rawi<-NULL
+      #Example "https://kc.humanitarianresponse.info/api/v1/data/79489.csv"
+      d_rawi<-kobohr_getdata_csv(url,kobo_user,Kobo_pw)
+      d_rawi<-as.data.frame(d_rawi)
+      d_rawi<-lapply(d_rawi,as.character)
+      d_rawi<-as.data.frame(d_rawi,stringsAsFactors=FALSE,check.names=FALSE)
+      
+      #Recode 'n/a' to 'NA'
+       for (kl in 1:ncol(d_rawi)){
+         d_rawi[,kl]<-ifelse(d_rawi[,kl]=="n/a",NA,d_rawi[,kl])
+       }
+      #write to csv
+      #save file name
+      #savefile <- paste0("./Data/01_Download_CSV/",d_formlist_csv$id_string[i],"_", d_formlist_csv$id[i],"_data.csv")
+      #write_csv(d_rawi,savefile)
+      #save as xlsx
+      d_rawi[is.na(d_rawi)] <- 'NA'
+      #make filename that can be recognised - remove arabic texts
+      title<-"MSNA2018"
+      title<-str_replace_all(title," ","_")
+      title<-iconv(title,"UTF-8","ASCII",sub="")
+      title<-str_replace_all(title,"__","")
+      #
+      savefile_xlsx <- paste0("./Data/01_Download_CSV/",title,"_",form_id,"_data.xlsx")
+      #write.xlsx2(as.data.frame(d_rawi),savefile_xlsx,sheetName = "data",row.names = FALSE)
+      openxlsx::write.xlsx(d_rawi,savefile_xlsx,sheetName="data",row.names=FALSE)
+  }
+}
+```
+
+# Recode data
+```{r}
+#2----------START ENCODING ALL FILES IN THE FOLDER----------------------------------
+  nameodk_recode<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
+  nameodk<-nameodk_recode
+  
+  #read ODK file choices and survey sheet
+  odk_survey<-read_excel(nameodk,sheet = "survey",col_types = "text")  
+  dico<-read_excel(nameodk,sheet="choices",col_types ="text")
+  key<-row.names(dico)
+  dico<-cbind(key,dico)
+  dico<-data.frame(dico,stringsAsFactors = FALSE,check.names = FALSE)
+      #recode all the files in the folder
+      csv_path<-"./Data/03_Ready_for_recode/"
+      #listfiles<-list.files(csv_path,".csv") #change here
+      listfiles<-list.files(csv_path,".xlsx")
+      
+      for (i in 1:length(listfiles)){
+        fname<-listfiles[i]
+        save_fname<-gsub("\\.xlsx", "_recode.xlsx",paste0(csv_path,fname))
+        #save_fname<-gsub("\\.csv", "_recode.xlsx",paste0(csv_path,fname)) #change here
+        #data<-read.csv(paste0(csv_path,fname),na="n/a",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE) #change here
+        #optional for XLSX reading
+        data=as.data.frame(read_excel(paste0(csv_path,fname),na="NA",col_types ="text"))
+        
+        #--do not include admin columns in recoding
+        #data<-rename(data,"admin1pcode"="Q_M/Q_M1","admin2pcode"="Q_M/Q_M2","admin3pcode"="Q_M/Q_M3","admin4pcode"="Q_M/Q_M4","neighpcode"="Q_M/Q_M5")
+        admin1pcode <-data[,c("Q_M/admin1")]
+        admin2pcode <-data[,c("Q_M/admin2")]
+        admin3pcode <-data[,c("Q_M/admin3")]
+        admin4pcode <-data[,c("Q_M/admin4")]
+        neighpcode <-data[,c("Q_M/neighborho")]
+        
+        data<-cbind(
+              admin1pcode,
+              admin2pcode,
+              admin3pcode,
+              admin4pcode,
+              neighpcode,
+              data
+              )
+        print(paste0("Start Encoding file - ", fname, ' - Start time =', Sys.time()))
+        data_label<-kobo_encode(data,dico)
+        #print(paste0("Finished Encoding file - ", fname, ' - End time =', Sys.time()))
+        data_label[is.na(data_label)] <- 'NA'
+        #write.xlsx2(data_label,save_fname, row.names = FALSE)
+        openxlsx::write.xlsx(data_label,save_fname,sheetName="data", row.names = FALSE)
+        #print(paste0("Finished Encoding file - ", fname, ' - End time =', Sys.time()))
+      } 
+
+```
+
+# Merge multiple files into one
+```{r}
+xlsx_path<-paste0("./Data/06_Final_ready_to_merge")
+d_merged<- as.data.frame(files_merge_xlsx(xlsx_path))
+d_merged[is.na(d_merged)] <- 'NA'
+openxlsx::write.xlsx(d_merged,paste0(xlsx_path,"/MSNA2018_data_merged.xlsx"),sheetName="MSNA2018_data_raw",row.names=FALSE)
+
+```
+
+
+

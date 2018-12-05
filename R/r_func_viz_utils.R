@@ -301,23 +301,25 @@ agg_data_select_one<-function(db,data_geo_level,agg_geo_level,vn_gname){
   i_colind<-which(names(d_viz_agg)==vn_gname)
   names(d_viz_agg)[i_colind]<-"variables"
   #
-  x_i<-"variables" #column name
-  y_i<-"freq_percentage" #column name
-  fill_i<-"freq_percentage"
-  #title_i<- paste0(str_wrap(vn_title, width=50),"\n",vn_dcol)
-  title_i<- paste0(str_wrap(vn_title, width=50))
-  #
-  #--plot--
-  bar_chart <- draw_barchart_percentage (d_viz_total,x_i,y_i,fill_i, title_i)
-  bar_chart
-  
-  
-  #bar_chart_facet<-draw_barchart_facet_percentage(d_viz,x_i,y_i,fill_i=y_i, title_i,facet_i = facet_col_name)
-  #bar_chart_facet
-  #
-  doc<-body_add_gg(doc,value=bar_chart,style = "Normal")
-  doc<-body_add_table(doc,as.data.frame(total_responses), style = "table_template")
+  if (nrow(d_viz_total)>0){
+    x_i<-"variables" #column name
+    y_i<-"freq_percentage" #column name
+    fill_i<-"freq_percentage"
+    #title_i<- paste0(str_wrap(vn_title, width=50),"\n",vn_dcol)
+    title_i<- paste0(str_wrap(vn_title, width=50))
+    #
+    #--plot--
+    bar_chart <- draw_barchart_percentage (d_viz_total,x_i,y_i,fill_i, title_i)
+    bar_chart
+    
+    
+    #bar_chart_facet<-draw_barchart_facet_percentage(d_viz,x_i,y_i,fill_i=y_i, title_i,facet_i = facet_col_name)
+    #bar_chart_facet
+    #
+    doc<-body_add_gg(doc,value=bar_chart,style = "Normal")
+    doc<-body_add_table(doc,as.data.frame(total_responses), style = "table_template")
   ##print in the file
+  }
 }
 
 

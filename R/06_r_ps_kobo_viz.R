@@ -13,7 +13,7 @@ library(officer)
 ##-----data preparation---------
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_JOR_DAM_TUR_data_merged_forAggregation.xlsx"
 #data_fname<-"./Data/100_Aggregation/syria_msna_2018_raw_data_merged_all_20170824_1455hrs_all_corrected_v2.xlsx"
-data_fname<-"./Data/10_Viz/MSNA2018_Aggregated_data_20180831_1900hrs_FINAL_ALL_SECTORS_AGG_Step07_FINAL.xlsx"
+data_fname<-"./Data/10_Viz/MSNA2018_data_merged_DEMO_STIMA_AGG_Step07_FINAL_all.xlsx"
 #data_fname<-"./Data/10_Viz/CFP_Gender_Based_Aggregation/MSNA2018_Aggregated_Data_20180831_1900hrs_AGG_Step07_FINAL_protection_CFP_Gender.xlsx"
 #-------------------------------------#
 nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
@@ -46,7 +46,7 @@ flag_agg_level<-"GEO"
 #-----------------AGGREGATION STARTS HERE-------------------------------------------------------------
       print(paste0("Reading data file - ", Sys.time())) 
       #data<-read_excel(data_fname,col_types ="text", sheet="data",na='NA')
-      data<-read_excel(data_fname,col_types ="text", sheet="MSNA2018_data_aggregated",na='NA')
+      data<-read_excel(data_fname,col_types ="text", sheet="data",na='NA')
       
       #data<-read.csv(data_fname,na="NA",encoding = "UTF-8", colClasses=c("character"), check.names = FALSE)
       
@@ -116,7 +116,7 @@ flag_agg_level<-"GEO"
     vn_qrankgroup<-s1_headers$qrankgroup[i]
     #
     print (paste0("processing - ", i, " - method: ",vn_aggmethod, " - ", vn_gname))
-    
+    col_ind<-0
     ####------------------####
     if (vn_qtype=="select_multiple"){
       vn_gname<-paste0(vn_gname,"/")

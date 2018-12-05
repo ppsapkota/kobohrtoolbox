@@ -47,7 +47,7 @@ Sys.setlocale(category = "LC_ALL",locale = "arabic")
 
 #adminurl <- "https://data.humdata.org/dataset/356a63e9-90aa-4b9c-a938-58ef24469c00/resource/69663fc5-0aeb-4a4b-8cac-e58a4d2eb9a9/download/syr_admin_180627.xlsx"
 #download.file(url=adminurl,destfile="syr_admin_180627.xlsx", mode='wb')
-admin_xlsx<-"../admin/syr_admin_20180701.xlsx"
+admin_xlsx<-"../Data/Admin/syr_admin_20180701.xlsx"
 admin1 <- read_excel(admin_xlsx, sheet = "admin1",col_types = "text")
 admin2 <- read_excel(admin_xlsx, sheet = "admin2", col_types = "text")
 admin3 <- read_excel(admin_xlsx, sheet = "admin3", col_types = "text")
@@ -59,7 +59,7 @@ region <- read_excel("../kobo_users/regions.xlsx", sheet = "admin1_regions")
 ### read other datasets
 
 ```{r}
-kobo_form <-"../xlsx_form/ochaMSNA2018v9_master.xlsx"
+kobo_form <-"../xlsform/ochaMSNA2018v9_master.xlsx"
 
 kobo_survey <- read_excel(kobo_form, sheet = "survey", col_types = "text")
 kobo_choices <- read_excel(kobo_form, sheet = "choices",, col_types = "text")
@@ -343,21 +343,21 @@ for (hub in hub_list){
     ## process partner data to assign regions to partners
     coverage <- turkey_coverage
     ## for each organization create xls files based on regions they ar active in
-    kobo_master_name <- "../xlsx_form/tur/kobo_msna2018"
+    kobo_master_name <- "../xlsform/tur/kobo_msna2018"
   }
   #---------------
   if(hub=="syria"){
     ## process partner data to assign regions to partners
     coverage <- syr_coverage 
     ## for each organization create xls files based on regions they ar active in
-    kobo_master_name <- "../xlsx_form/syr/kobo_msna2018"
+    kobo_master_name <- "../xlsform/syr/kobo_msna2018"
   }
   #--------------
   if(hub=="jordan"){
     ## process partner data to assign regions to partners
     coverage <- jor_coverage 
     ## for each organization create xls files based on regions they ar active in
-    kobo_master_name <- "../xlsx_form/jor/kobo_msna2018"
+    kobo_master_name <- "../xlsform/jor/kobo_msna2018"
   }
   
   #--------------
@@ -365,7 +365,7 @@ for (hub in hub_list){
     ## process partner data to assign regions to partners
     coverage <- nes_coverage 
     ## for each organization create xls files based on regions they ar active in
-    kobo_master_name <- "../xlsx_form/nes/kobo_msna2018"
+    kobo_master_name <- "../xlsform/nes/kobo_msna2018"
   }
 # ####coverage governorate list
 #   coverage_govlist<- coverage %>% 
@@ -439,7 +439,7 @@ for (hub in hub_list){
 ```{r}
 partner_list<- c("3106")
 gov_list<-c("SY08","SY09","SY11")
-kobo_master_name <- "../xlsx_form/nes/kobo_msna2018"
+kobo_master_name <- "../xlsform/nes/kobo_msna2018"
 for (partner in partner_list){  #
       print (partner)
         ## update partner code default in the survey form
@@ -565,7 +565,7 @@ for (partner in partner_list){  #
 ## prepare NPM
 ```{r}
 npm_code <- 1729
-kobo_npm_name <- "../xlsx_form/npm/kobo_msna2018_"
+kobo_npm_name <- "../xlsform/npm/kobo_msna2018_"
 
    ind_row <- which(kobo_survey_no_english$name==partner_code_name)
    kobo_survey_no_english_npm<-kobo_survey_no_english
@@ -617,7 +617,7 @@ for (i in 1:nrow(admin1)){
 
 ## create a form with all admin lists - ARABIC ONLY
 ```{r}
-xlsfilename_all <- "../xlsx_form/kobo_syr_msna_2019_all.xlsx"
+xlsfilename_all <- "../xlsform/kobo_syr_msna_2019_all.xlsx"
 # update setteing 
 new_id<-paste0("syria_msna2018","_",survey_title_ar,"_","all")
 new_title = paste0("syria_msna2018","_",survey_title_ar,"_","all")
