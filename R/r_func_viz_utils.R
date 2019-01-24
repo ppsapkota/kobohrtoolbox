@@ -47,12 +47,14 @@ draw_barchart_value<-function(d_i,x_i,y_i,fill_i, title_i){
           panel.background = element_rect(fill ="white",colour = NA),
           panel.border = element_blank(),
           panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank()
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(size=10),
+          text = element_text(size=8)
     )+
-    geom_text(aes_string(y=0,label=y_i),hjust=-0.5, vjust=0.5, size = 3, color = "grey20")+
+    geom_text(aes_string(y=0,label=y_i),hjust=-0.5, vjust=0.5, size = 2, color = "grey20")+
     scale_x_discrete(labels=function(x){str_wrap(x,width = 50)})+
     coord_flip()+
-    labs(title=str_wrap(title_i,width=30))+
+    labs(title=str_wrap(title_i,width=35))+
     ylab("mean rank score")
   
   #bar_chart
@@ -76,18 +78,19 @@ draw_barchart_facet_value<-function(d_i,x_i,y_i,fill_i, title_i,facet_i){
     theme(legend.position = "none",
           axis.title.y=element_blank(),
           axis.ticks.y=element_blank(),
-          axis.text.x=element_blank(),
           axis.ticks.x=element_blank(),
           plot.background = element_rect(fill ="white",colour = NA),
           panel.background = element_rect(fill ="white",colour = NA),
           panel.border = element_blank(),
           panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank()
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(size=10),
+          text = element_text(size=8)
     )+
-    geom_text(aes_string(y=0,label=y_i),hjust=-0.5, vjust=0.5, size = 3, color = "grey20")+
-    scale_x_discrete(labels=function(x){str_wrap(x,width = 50)})+
+    geom_text(aes_string(y=0,label=y_i),hjust=-0.5, vjust=0.5, size = 2, color = "grey20")+
+    scale_x_discrete(labels=function(x){str_wrap(x,width = 70)})+
     coord_flip()+
-    labs(title=str_wrap(title_i,width=30))+
+    labs(title=str_wrap(title_i,width=35))+
     ylab("mean rank score")
   
   #bar_chart
@@ -116,12 +119,14 @@ draw_barchart_percentage<-function(d_i,x_i,y_i,fill_i, title_i){
           panel.background = element_rect(fill ="white",colour = NA),
           panel.border = element_blank(),
           panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank()
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(size=10),
+          text = element_text(size=8)
     )+
-    geom_text(aes_string(y=0,label="freq_percentage_label"),hjust=-0.5, vjust=0.5, size = 3, color = "grey20")+
+    geom_text(aes_string(y=0,label="freq_percentage_label"),hjust=-0.5, vjust=0.5, size = 2, color = "grey20")+
     scale_x_discrete(labels=function(x){str_wrap(x,width = 50)})+
     coord_flip()+
-    labs(title=str_wrap(title_i,width=30))+
+    labs(title=str_wrap(title_i,width=35))+
     ylab("relative frequencies (%)")
   
   #bar_chart
@@ -153,12 +158,14 @@ draw_barchart_facet_percentage<-function(d_i,x_i,y_i,fill_i, title_i, facet_i){
           panel.background = element_rect(fill ="white",colour = NA),
           panel.border = element_blank(),
           panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank()
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(size=10),
+          text = element_text(size=8)
     )+
-    geom_text(aes_string(y=0,label="freq_percentage_label"),hjust=-0.5, vjust=0.5, size = 3, color = "grey20")+
+    geom_text(aes_string(y=0,label="freq_percentage_label"),hjust=-0.5, vjust=0.5, size = 2, color = "grey20")+
     scale_x_discrete(labels=function(x){str_wrap(x,width = 50)})+
     coord_flip()+
-    labs(title=str_wrap(title_i,width=30))+
+    labs(title=str_wrap(title_i,width=35))+
     ylab("relative frequencies (%)")
   
   #bar_chart
@@ -191,23 +198,19 @@ draw_barchart_facetplus_percentage<-function(d_i,x_i,y_i,fill_i, title_i, facet_
           panel.background = element_rect(fill ="white",colour = NA),
           panel.border = element_blank(),
           panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank()
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(size=10),
+          text = element_text(size=8)
     )+
-    geom_text(aes_string(y=0,label="freq_percentage_label"),hjust=-0.5, vjust=0.5, size = 3, color = "grey20")+
+    geom_text(aes_string(y=0,label="freq_percentage_label"),hjust=-0.5, vjust=0.5, size = 2, color = "grey20")+
     scale_x_discrete(labels=function(x){str_wrap(x,width = 50)})+
     coord_flip()+
-    labs(title=str_wrap(title_i,width=30))+
+    labs(title=str_wrap(title_i,width=35))+
     ylab("relative frequencies (%)")
   
   #bar_chart
   return(bar_chart)
 }
-
-
-
-
-
-
 
 ###------------------------------------------------###
 draw_barchart_faceted<-function(d_i,x_i,y_i,fill_i, title_i, facet_i){
@@ -216,7 +219,7 @@ draw_barchart_faceted<-function(d_i,x_i,y_i,fill_i, title_i, facet_i){
   
   bar_chart<-p+
     theme(legend.position = "top")+
-    geom_text(aes_string(label =y_i),hjust=-0.3, vjust=0.5, size = 3, color = "grey20", position=position_dodge(0.9))+
+    geom_text(aes_string(label =y_i),hjust=-0.3, vjust=0.5, size = 2, color = "grey20", position=position_dodge(0.9))+
     coord_flip()+
     labs(title=title_i)
   bar_chart
@@ -241,9 +244,9 @@ draw_barchart_stacked<-function(d_i,x_i,y_i,fill_i, title_i){
   
   bar_chart<-p+
     theme(legend.position = "top")+
-    geom_text(aes_string(label =y_i, y="value_i_cs"),hjust=1.5, vjust=0.5, size = 3, color = "grey20")+
+    geom_text(aes_string(label =y_i, y="value_i_cs"),hjust=1.5, vjust=0.5, size = 2, color = "grey20")+
     coord_flip()+
-    labs(title=str_wrap(title_i,width=30))+
+    labs(title=str_wrap(title_i,width=35))+
   bar_chart
   return(bar_chart)
 }
@@ -295,18 +298,27 @@ agg_data_select_one<-function(db,data_geo_level,agg_geo_level,vn_gname){
               summarize(freq_count=n()) %>% 
               left_join(d_agg_total_responses,by=agg_geo_level) %>% 
               mutate(freq_percentage=round(freq_count/total_responses,2)*100) %>% 
-              arrange(desc(freq_count)) %>% 
+              arrange_at(vars(agg_geo_level,freq_count)) %>% 
               ungroup() 
   
   i_colind<-which(names(d_viz_agg)==vn_gname)
   names(d_viz_agg)[i_colind]<-"variables"
+  #export to excel
+  sheet_name_i<-unlist(strsplit(vn_gname,"/"))
+  sheet_name_i<-sheet_name_i[length(sheet_name_i)]
+  sheet_name_i<-substr(sheet_name_i,1,12)
   #
+  addWorksheet(wb,sheet_name_i)
+  writeData(wb,sheet=sheet_name_i,x=vn_title,startRow = i_startrow-1)
+  writeData(wb,sheet=sheet_name_i,x=d_viz_agg,startRow = i_startrow)
+  i_startrow<-i_startrow + nrow(d_viz_agg)+5
+  #charts
   if (nrow(d_viz_total)>0){
     x_i<-"variables" #column name
     y_i<-"freq_percentage" #column name
     fill_i<-"freq_percentage"
     #title_i<- paste0(str_wrap(vn_title, width=50),"\n",vn_dcol)
-    title_i<- paste0(str_wrap(vn_title, width=50))
+    title_i<- paste0(str_wrap(vn_title, width=35))
     #
     #--plot--
     bar_chart <- draw_barchart_percentage (d_viz_total,x_i,y_i,fill_i, title_i)
@@ -364,7 +376,7 @@ agg_data_facet_select_one<-function(db,data_geo_level,agg_geo_level,facet_col_na
   y_i<-"freq_percentage" #column name
   fill_i<-"freq_percentage"
   #title_i<- paste0(str_wrap(vn_title, width=50),"\n",vn_dcol)
-  title_i<- paste0(str_wrap(vn_title, width=50))
+  title_i<- paste0(str_wrap(vn_title, width=35))
   #
   #--plot--
   bar_chart_facet<-draw_barchart_facet_percentage(d_viz,x_i,y_i,fill_i=y_i, title_i,facet_i = facet_col_name)
@@ -443,6 +455,16 @@ agg_data_select_multiple<-function(db,data_geo_level,agg_geo_level,vn_gname){
   #
   i_colind<-which(names(d_viz_agg)=="key")
   names(d_viz_agg)[i_colind]<-"variables"
+  
+  ###----#export to excel#---------
+  sheet_name_i<-unlist(strsplit(vn_gname,"/"))
+  sheet_name_i<-sheet_name_i[length(sheet_name_i)]
+  sheet_name_i<-substr(sheet_name_i,1,12)
+  #
+  addWorksheet(wb,sheet_name_i)
+  writeData(wb,sheet=sheet_name_i,x=vn_title,startRow = i_startrow-1)
+  writeData(wb,sheet=sheet_name_i,x=d_viz_agg,startRow = i_startrow)
+  i_startrow<-i_startrow + nrow(d_viz_agg)+5
   
   ###print only of it has records
   if (nrow(d_viz_agg)>0){
@@ -608,6 +630,16 @@ agg_data_select_one_rank<-function(db,data_geo_level,agg_geo_level, vn_gname){
   i_colind<-which(names(d_viz_agg)=="key")
   names(d_viz_agg)[i_colind]<-"variables"
   
+  ###----#export to excel#---------
+  #sheet_name_i<-unlist(strsplit(vn_gname,"/"))
+  #sheet_name_i<-sheet_name_i[length(sheet_name_i)]
+  #sheet_name_i<-substr(sheet_name_i,1,12)
+  #
+  # addWorksheet(wb,sheet_name_i)
+  # writeData(wb,sheet=sheet_name_i,x=vn_title,startRow = i_startrow-1)
+  # writeData(wb,sheet=sheet_name_i,x=d_viz_agg,startRow = i_startrow)
+  # i_startrow<-i_startrow + nrow(d_viz_agg)+5
+  
   ###print only of it has records
   if (nrow(d_viz_agg)>0){
     ##Alternate method
@@ -615,7 +647,7 @@ agg_data_select_one_rank<-function(db,data_geo_level,agg_geo_level, vn_gname){
     x_i<-"variables" #column name
     y_i<-"avg_value" #column name
     fill_i<-"avg_value"
-    title_i<- paste0(str_wrap(vn_title_full, width=50))
+    title_i<- paste0(str_wrap(vn_title_full, width=35))
     
     ###FACETED
     bar_chart<-draw_barchart_value(d_viz_total,x_i,y_i,fill_i=y_i, title_i)
@@ -691,7 +723,7 @@ agg_data_facet_select_one_rank<-function(db,data_geo_level,agg_geo_level,facet_c
     x_i<-"variables" #column name
     y_i<-"avg_value" #column name
     fill_i<-"avg_value"
-    title_i<- paste0(str_wrap(vn_title_full, width=50))
+    title_i<- paste0(str_wrap(vn_title_full, width=35))
     facet_i<-facet_col_name
     ###FACETED
     bar_chart_facet<-draw_barchart_facet_value(d_viz_agg,x_i,y_i,fill_i=y_i, title_i,facet_i)
