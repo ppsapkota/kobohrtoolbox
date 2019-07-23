@@ -18,6 +18,7 @@ assign_ordinal_score_bylabel <- function(data1, choices1) {
     if (length(col_ind)>0){
         #lookuptable
         lookup_table<-filter(ch_s1,gname==i_headername)
+        #lookup_table<-filter_(ch_s1,ch_fieldname1==i_headername)
         lookup_table<-select(lookup_table,c("namechoice","labelchoice","vtype","vscore","gname"))
         #loop through lookup table - which will be fewer rows to manage
         for (i_lt in 1:nrow(lookup_table)){

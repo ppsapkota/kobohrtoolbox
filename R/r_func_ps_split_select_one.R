@@ -104,7 +104,7 @@ split_select_one<-function(db,choices){
   ##CASE 1 - Select_one
   #-select all the field headers for select one and Rank
   #ch_s1<-choices[choices$aggmethod=="RANK3" | choices$aggmethod=="RANK4" ,]
-  ch_s1<-as.data.frame(filter(choices,aggmethod=="SEL1_RALL" | aggmethod=="SEL1_REL"))
+  ch_s1<-as.data.frame(filter(choices,aggmethod=="SEL1_RALL" | aggmethod=="SEL_1_RALL" | aggmethod=="SEL1_REL"))
   #--loop through all the rows or take all value
   ch_s1_headers<-distinct(as.data.frame(ch_s1[,c("name","qrankgroup","aggmethod")]))
   #names(ch_s1_headers)[1]<-"qrankgroup"
@@ -126,7 +126,7 @@ split_select_one<-function(db,choices){
       off<-0
       #ifelse is required to check non matching and if any variable is not in the lookup table, it will be retained as is
       for (i_lt in 1:nrow(ch_s1_lookup)){
-        #i_lt=26
+        #i_lt=2
         vn<-ch_s1_lookup$gname[i_lt]
         vn_name<-ch_s1_lookup$name[i_lt]
         vn_group<-ch_s1_lookup$qrankgroup[i_lt]
@@ -171,7 +171,7 @@ split_select_one_all_transfer<-function(db,choices){
   ##CASE 1 - Select_one
   #-select all the field headers for select one and Rank
   #ch_s1<-choices[choices$aggmethod=="RANK3" | choices$aggmethod=="RANK4" ,]
-  ch_s1<-as.data.frame(filter(choices,aggmethod=="SEL1_RALL"))
+  ch_s1<-as.data.frame(filter(choices,aggmethod=="SEL1_RALL" | aggmethod=="SEL_1_RALL"))
   #--loop through all the rows or take all value
   ch_s1_headers<-distinct(as.data.frame(ch_s1[,c("name","qrankgroup","aggmethod","gname")]))
   #names(ch_s1_headers)[1]<-"qrankgroup"
@@ -185,7 +185,7 @@ split_select_one_all_transfer<-function(db,choices){
     i_vn_gname<-ch_s1_headers[i,c("gname")]
     i_aggmethod<-ch_s1_headers[i,c("aggmethod")]
     #get all variables table
-    ch_s1_lookup<-as.data.frame(filter(ch_s1,qrankgroup==i_vn_name))
+    ch_s1_lookup<-as.data.frame(filter(ch_s1,name==i_vn_name))
     #column index from the data
     col_ind<-which(str_detect(names(db_rec),i_vn_name)%in%TRUE)
     ##identify col_ind for all
@@ -199,7 +199,7 @@ split_select_one_all_transfer<-function(db,choices){
       #off<-0
       #ifelse is required to check non matching and if any variable is not in the lookup table, it will be retained as is
       for (i_lt in 1:nrow(ch_s1_lookup)){
-        #i_lt=26
+        #i_lt=2
         vn<-ch_s1_lookup$gname[i_lt]
         vn_group<-ch_s1_lookup$qrankgroup[i_lt]
         vn_labelchoice<-ch_s1_lookup$labelchoice_clean[i_lt]

@@ -214,17 +214,17 @@ kobo_dico <- function(form_file_name) {
   
   
   ## Pick only selected columns without names
-  survey <- survey[ ,c("type",   "name" ,  "label", "qtype","listname","qlevel","recodevar","aggmethod","qrankscore","qrankgroup","sector","group", "gname", "gname_label"
-                       #"repeatsummarize","variable","disaggregation",  "chapter", "sensitive","anonymise","correlate"
-                       # "indicator","indicatorgroup","indicatortype",
-                       # "indicatorlevel","dataexternal","indicatorcalculation","indicatornormalisation"
-                       #"indicator","select", "Comment", "indicatordirect", "indicatorgroup" ## This indicator reference
-                       # "label::English",
-                       #"label::Arabic" ,"hint::Arabic",
-                       # "hint::English", "relevant",  "required", "constraint",   "constraint_message::Arabic",
-                       # "constraint_message::English", "default",  "appearance", "calculation",  "read_only"  ,
-                       # "repeat_count"
-  )]
+  # survey <- survey[ ,c("type",   "name" ,  "label", "qtype","listname","qlevel","recodevar","aggmethod","qrankscore","qrankgroup","sector","group", "gname", "gname_label"
+  #                      #"repeatsummarize","variable","disaggregation",  "chapter", "sensitive","anonymise","correlate"
+  #                      # "indicator","indicatorgroup","indicatortype",
+  #                      # "indicatorlevel","dataexternal","indicatorcalculation","indicatornormalisation"
+  #                      #"indicator","select", "Comment", "indicatordirect", "indicatorgroup" ## This indicator reference
+  #                      # "label::English",
+  #                      #"label::Arabic" ,"hint::Arabic",
+  #                      # "hint::English", "relevant",  "required", "constraint",   "constraint_message::Arabic",
+  #                      # "constraint_message::English", "default",  "appearance", "calculation",  "read_only"  ,
+  #                      # "repeat_count"
+  # )]
   
   ##--------------------------prepare save name--------------
   
@@ -248,7 +248,9 @@ kobo_dico <- function(form_file_name) {
   
   #-----------
   choices<- rename(choices,"listnamechoice"="list_name","namechoice"="name","labelchoice"="label::English")
-  choices$listnamechoice<-str_trim(choices$listnamechoice)
+  
+  #trim was removed for Protection KI 2019 MSNA
+  #choices$listnamechoice<-str_trim(choices$listnamechoice)
   
   #choices[["labelchoice"]]<-gsub("/","_",choices[["labelchoice"]])
   
@@ -262,7 +264,8 @@ kobo_dico <- function(form_file_name) {
   #
   choices_survey$labelchoice_clean<-choices_survey$labelchoice
   #choices_survey$labelchoice_clean<-str_replace_all(choices_survey$labelchoice_clean,c('\\.'='_','\\*'='','\\:'='','\\?'='','/'='_'))
-  choices_survey$labelchoice_clean<-str_replace_all(choices_survey$labelchoice_clean,c('/'='_'))
+  #_ substitution is not used for Protection KI assessment in 2019
+  #choices_survey$labelchoice_clean<-str_replace_all(choices_survey$labelchoice_clean,c('/'='_'))
   #
   choices_survey$gname_full_mlabel<-""
   choices_survey$gname_full_mlabel<-ifelse(choices_survey$qtype=="select_multiple",paste0(choices_survey$gname,"/",choices_survey$labelchoice_clean),choices_survey$gname)

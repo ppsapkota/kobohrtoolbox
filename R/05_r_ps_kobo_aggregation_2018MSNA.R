@@ -1,8 +1,9 @@
 '----
 Developed by: Punya Prasad Sapkota
 Reference: Tool developed by Olivier/REACH
-Last modified: 22 July 2019
+Last modified: 30 August 2018
 ----'
+rm(list=ls())
 source("./R/91_r_ps_kobo_library_init.R")
 #------------DEFINE Aggregation level----------------
 ##-----data preparation---------
@@ -10,8 +11,8 @@ source("./R/91_r_ps_kobo_library_init.R")
 #data_fname<-"./Data/100_Aggregation/SAMPLE_FOR_TESTING_MSNA2018_RAW_data_merged.xlsx"
 
 ##FINAL DATA
-data_fname<-"./Data/100_Aggregation/MSNA_Protection_KI_DataRow_18072019.xlsx"
-nameodk<-"./xlsform/MSNA2019_KI_PR/MSNA2019_KI_Protection_Kobo_file_V3_agg_method.xlsx"
+data_fname<-"./Data/100_Aggregation/MSNA2018_data_merged_DEMO_STIMA.xlsx"
+nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method.xlsx"
 
 ###FOR WORST CASE
 #nameodk<-"./xlsform/ochaMSNA2018v9_master_agg_method_protection_wcase.xlsx"
@@ -63,42 +64,17 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
       #   data[,kl]<-ifelse(data[,kl]=="NULL",NA,data[,kl])
       # }
       
-      #MSNA2019---rename field headers to match with code
-      #some cleanup of the data
-      for (kl in 1:ncol(data)){
-        i_colname<-names(data)[kl]
-        #find the colname in choices file
-        ch_headers<-distinct(as.data.frame(choices[,c("gname","gname_full","gname_full_label")])) %>% 
-                    filter(!is.na(gname))
-        #find out the recod for field name
-        lookup_table<-filter(ch_headers,gname_full_label==i_colname)
-        
-        if(nrow(lookup_table)>0){
-          i_colname_code<-lookup_table$gname_full[1]#take the first one. It should return only one.
-          #
-          #now rename the column header
-          names(data)[kl]<-i_colname_code
-          
-        }else{i_colname_code<-i_colname} #don't change
-        
-      }
-      
-      write_csv(data,gsub(".xlsx","_Step01_RENAME_FIELD_HEADERS.csv",data_fname),na='NA')
-      
-      #
 #############---------PROTECTION-------ALL-MEN-WOMEN##############
       # data<-protection_gender_all_transfer(data,survey)
       # write_csv(data,gsub(".xlsx","_S1_Step00_ALL_TRANSFER.csv",data_fname))
       # openxlsx::write.xlsx(data,gsub(".xlsx","_S1_Step00_ALL_TRANSFER.xlsx",data_fname),sheetName="data",row.names=FALSE)
       
-######-------------RECODE face to face--------
-      #Defined in rename_label field in choices sheet--------#####
+######-------------RECODE face to face----------------#####
       data<-select_one_rename_label(data,dico)
       write_csv(data,gsub(".xlsx","_S1_Step01_RENAME_LABEL.csv",data_fname),na='NA')
       
             
-###############--------SPLIT SELECT ONE TO MULTIPLE-(SEL_1_RALL--AVG_W_SEL_1_REL---------
-      # Assign 1 and 0 to respective cell values-----got it from qrankscore--------------###################
+###############--------SPLIT SELECT ONE TO MULTIPLE-(SEL_1_RALL--AVG_W_SEL_1_REL---------###################
       data<-split_select_one(data,dico)
       write_csv(data,gsub(".xlsx","_S1_Step01_SPLIT_SEL1.csv",data_fname),na='NA')      
       
@@ -121,97 +97,88 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
       #confidence level calculation
       #extract data collection method and KI type
       
-      # #-InterSector
-      #  cf_fields<-c("I_S_Q/Q_K1/Q_K1_C","I_S_Q/Q_K1/Q_K1_D")
-      #  cf_level_intersector<-calculate_confidence_level(data,cf_fields,dico) %>% 
-      #               rename_("cf_level_intersector"="cf_level")
-      #  
-      #  ki_gender_field<-c("I_S_Q/Q_K1/Q_K1_A")
-      #  ki_gender_intersector<-select_at(data, vars(ki_gender_field))
-      #  names(ki_gender_intersector)<-"ki_gender_intersector"
-      #  
-      # #-CCCM
-      #  cf_fields<-c("ccm_group/cfp_ccm_gr/cpf_ccm_mo","ccm_group/cfp_ccm_gr/cpf_ccm_ty")
-      #  cf_level_cccm<-calculate_confidence_level(data,cf_fields,dico) %>% 
-      #                 rename_("cf_level_cccm"="cf_level")
-      #  
-      #  ki_gender_field<-c("ccm_group/cfp_ccm_gr/cpf_ccm_ge")
-      #  ki_gender_cccm<-select_at(data, vars(ki_gender_field))
-      #  names(ki_gender_cccm)<-"ki_gender_cccm"
-      #  
-      # #-Education
-      #  cf_fields<-c("educationg/edu_cfp_me/edu_interv/q3_1modali", "educationg/edu_cfp_me/edu_interv/q3_2type_o")
-      #  cf_level_education<-calculate_confidence_level(data,cf_fields,dico) %>% 
-      #                rename_("cf_level_education"="cf_level")
-      #  
-      #  ki_gender_field<-c("educationg/edu_cfp_me/edu_interinf/cpf_edu_ge")
-      #  ki_gender_education<-select_at(data, vars(ki_gender_field))
-      #  names(ki_gender_education)<-"ki_gender_education"
-      #  
-      #  
-      #  #-NFI-Shelter
-      #  cf_fields<-c("nfi_group/nfi_cfp_gr/nfi_cfp_mo", "nfi_group/nfi_cfp_gr/nfi_cfp_ty")
-      #  cf_level_nfishelter<-calculate_confidence_level(data,cf_fields,dico) %>% 
-      #                       rename_("cf_level_nfishelter"="cf_level")
-      #  
-      #  ki_gender_field<-c("nfi_group/nfi_cfp_gr/nfi_cfp_ge")
-      #  ki_gender_nfishelter<-select_at(data, vars(ki_gender_field))
-      #  names(ki_gender_nfishelter)<-"ki_gender_nfishelter"
-      #  
-      #  #-FSS
-      #  cf_fields<-c("q5food_sec/food51_com/k_5_3modal", "q5food_sec/food51_com/k_5_4typec")
-      #  cf_level_fss<-calculate_confidence_level(data,cf_fields,dico) %>% 
-      #                rename_("cf_level_fss"="cf_level")
-      #   
-      #  ki_gender_field<-c("q5food_sec/food51_com/k_5_1gende")
-      #  ki_gender_fss<-select_at(data, vars(ki_gender_field))
-      #  names(ki_gender_fss)<-"ki_gender_fss"
-      #  
-      #  
-      #  #-Health (medical professional)
-      #  cf_fields<-c("q6health_s/qcomm_h_p/k_6_3modal", "q6health_s/qcomm_h_p/k_6_4typec")
-      #  cf_level_health_mf<-calculate_confidence_level(data,cf_fields,dico) %>% 
-      #                      rename_("cf_level_health_mf"="cf_level")
-      #  
-      #  ki_gender_field<-c("q6health_s/qcomm_h_p/k_6_1gende")
-      #  ki_gender_health_mf<-select_at(data, vars(ki_gender_field))
-      #  names(ki_gender_health_mf)<-"ki_gender_health_mf"
-      #  
-      #  #
-      #  #-Health (non-medical professional)
-      #  cf_fields<-c("q6health_s/qcomm_h_np/k_6_3_1mod", "q6health_s/qcomm_h_np/k_6_4_1typ")
-      #  cf_level_health_non_mf<-calculate_confidence_level(data,cf_fields,dico) %>% 
-      #                          rename_("cf_level_health_non_mf"="cf_level")
-      #  
-      #  ki_gender_field<-c("q6health_s/qcomm_h_np/k_6_1_1gen")
-      #  ki_gender_health_non_mf<-select_at(data, vars(ki_gender_field))
-      #  names(ki_gender_health_non_mf)<-"ki_gender_health_non_mf"
-      #  
-      #  #
-      #  #ERL
-      #  cf_fields<-c("q7early_re/qcommunity_fp2/k_7_3modal", "q7early_re/qcommunity_fp2/k_7_4type")
-      #  cf_level_erl<-calculate_confidence_level(data,cf_fields,dico) %>% 
-      #                rename_("cf_level_erl"="cf_level")
-      #  
-      #  ki_gender_field<-c("q7early_re/qcommunity_fp2/k_7_1gende")
-      #  ki_gender_erl<-select_at(data, vars(ki_gender_field))
-      #  names(ki_gender_erl)<-"ki_gender_erl"
-      #   
+      #-InterSector
+       cf_fields<-c("I_S_Q/Q_K1/Q_K1_C","I_S_Q/Q_K1/Q_K1_D")
+       cf_level_intersector<-calculate_confidence_level(data,cf_fields,dico) %>% 
+                    rename_("cf_level_intersector"="cf_level")
+       
+       ki_gender_field<-c("I_S_Q/Q_K1/Q_K1_A")
+       ki_gender_intersector<-select_at(data, vars(ki_gender_field))
+       names(ki_gender_intersector)<-"ki_gender_intersector"
+       
+      #-CCCM
+       cf_fields<-c("ccm_group/cfp_ccm_gr/cpf_ccm_mo","ccm_group/cfp_ccm_gr/cpf_ccm_ty")
+       cf_level_cccm<-calculate_confidence_level(data,cf_fields,dico) %>% 
+                      rename_("cf_level_cccm"="cf_level")
+       
+       ki_gender_field<-c("ccm_group/cfp_ccm_gr/cpf_ccm_ge")
+       ki_gender_cccm<-select_at(data, vars(ki_gender_field))
+       names(ki_gender_cccm)<-"ki_gender_cccm"
+       
+      #-Education
+       cf_fields<-c("educationg/edu_cfp_me/edu_interv/q3_1modali", "educationg/edu_cfp_me/edu_interv/q3_2type_o")
+       cf_level_education<-calculate_confidence_level(data,cf_fields,dico) %>% 
+                     rename_("cf_level_education"="cf_level")
+       
+       ki_gender_field<-c("educationg/edu_cfp_me/edu_interinf/cpf_edu_ge")
+       ki_gender_education<-select_at(data, vars(ki_gender_field))
+       names(ki_gender_education)<-"ki_gender_education"
+       
+       
+       #-NFI-Shelter
+       cf_fields<-c("nfi_group/nfi_cfp_gr/nfi_cfp_mo", "nfi_group/nfi_cfp_gr/nfi_cfp_ty")
+       cf_level_nfishelter<-calculate_confidence_level(data,cf_fields,dico) %>% 
+                            rename_("cf_level_nfishelter"="cf_level")
+       
+       ki_gender_field<-c("nfi_group/nfi_cfp_gr/nfi_cfp_ge")
+       ki_gender_nfishelter<-select_at(data, vars(ki_gender_field))
+       names(ki_gender_nfishelter)<-"ki_gender_nfishelter"
+       
+       #-FSS
+       cf_fields<-c("q5food_sec/food51_com/k_5_3modal", "q5food_sec/food51_com/k_5_4typec")
+       cf_level_fss<-calculate_confidence_level(data,cf_fields,dico) %>% 
+                     rename_("cf_level_fss"="cf_level")
+        
+       ki_gender_field<-c("q5food_sec/food51_com/k_5_1gende")
+       ki_gender_fss<-select_at(data, vars(ki_gender_field))
+       names(ki_gender_fss)<-"ki_gender_fss"
+       
+       
+       #-Health (medical professional)
+       cf_fields<-c("q6health_s/qcomm_h_p/k_6_3modal", "q6health_s/qcomm_h_p/k_6_4typec")
+       cf_level_health_mf<-calculate_confidence_level(data,cf_fields,dico) %>% 
+                           rename_("cf_level_health_mf"="cf_level")
+       
+       ki_gender_field<-c("q6health_s/qcomm_h_p/k_6_1gende")
+       ki_gender_health_mf<-select_at(data, vars(ki_gender_field))
+       names(ki_gender_health_mf)<-"ki_gender_health_mf"
+       
+       #
+       #-Health (non-medical professional)
+       cf_fields<-c("q6health_s/qcomm_h_np/k_6_3_1mod", "q6health_s/qcomm_h_np/k_6_4_1typ")
+       cf_level_health_non_mf<-calculate_confidence_level(data,cf_fields,dico) %>% 
+                               rename_("cf_level_health_non_mf"="cf_level")
+       
+       ki_gender_field<-c("q6health_s/qcomm_h_np/k_6_1_1gen")
+       ki_gender_health_non_mf<-select_at(data, vars(ki_gender_field))
+       names(ki_gender_health_non_mf)<-"ki_gender_health_non_mf"
+       
+       #
+       #ERL
+       cf_fields<-c("q7early_re/qcommunity_fp2/k_7_3modal", "q7early_re/qcommunity_fp2/k_7_4type")
+       cf_level_erl<-calculate_confidence_level(data,cf_fields,dico) %>% 
+                     rename_("cf_level_erl"="cf_level")
+       
+       ki_gender_field<-c("q7early_re/qcommunity_fp2/k_7_1gende")
+       ki_gender_erl<-select_at(data, vars(ki_gender_field))
+       names(ki_gender_erl)<-"ki_gender_erl"
+        
       #Protection
-       
-       #SECTION B: COMMUNITY SOURCE METADATA/K.1 Gender of the key informant
-       
-       #SECTION B: COMMUNITY SOURCE METADATA/K.3 Profile of key informant
-       
-       
-       
-       #cf_fields<-c("q8protecti/qcommunity_fp3/k_8_3modal", "q8protecti/qcommunity_fp3/k_8_4type_")
-       #cf_level_protection<-calculate_confidence_level(data,cf_fields,dico) %>% rename_("cf_level_protection"="cf_level")
+       cf_fields<-c("q8protecti/qcommunity_fp3/k_8_3modal", "q8protecti/qcommunity_fp3/k_8_4type_")
+       cf_level_protection<-calculate_confidence_level(data,cf_fields,dico) %>% 
+                            rename_("cf_level_protection"="cf_level")
       
-       #assign same weight
-      ##same confidence level for all <- that is no weighting is applied 
-       cf_level_protection<-rep(1,nrow(data))
-       ki_gender_field<-c("B/B_1")
+       ki_gender_field<-c("q8protecti/qcommunity_fp3/k_8_1gende")
        ki_gender_protection<-select_at(data, vars(ki_gender_field))
        names(ki_gender_protection)<-"ki_gender_protection"
        
@@ -219,30 +186,30 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
       #agg_pcode<-ifelse(is.na(data[,c("Q_M/Q_M5")]),data[,c("admin4pcode")],data[,c("neighpcode")])
       #data_level<-ifelse(is.na(data[,c("Q_M/Q_M5")]),"Community","Neighbourhood")
       
-      ##same confidence level for all <- that is no weighting is applied 
+       ##same confidence level for all <- that is no weighting is applied 
       cf_level_equal<-rep(1,nrow(data))
       
       ##---data-----
       data<-cbind(
             cf_level_equal,
-            #cf_level_intersector,
-            #cf_level_cccm,
-            #cf_level_education,
-            #cf_level_nfishelter,
-            #cf_level_fss,
-            #cf_level_health_mf,
-            #cf_level_health_non_mf,
-            #cf_level_erl,
+            cf_level_intersector,
+            cf_level_cccm,
+            cf_level_education,
+            cf_level_nfishelter,
+            cf_level_fss,
+            cf_level_health_mf,
+            cf_level_health_non_mf,
+            cf_level_erl,
             cf_level_protection,
             #ki gender
-            #ki_gender_intersector,
-            #ki_gender_cccm,
-            #ki_gender_education,
-            #ki_gender_nfishelter,
-            #ki_gender_fss,
-            #ki_gender_health_mf,
-            #ki_gender_health_non_mf,
-            #ki_gender_erl,
+            ki_gender_intersector,
+            ki_gender_cccm,
+            ki_gender_education,
+            ki_gender_nfishelter,
+            ki_gender_fss,
+            ki_gender_health_mf,
+            ki_gender_health_non_mf,
+            ki_gender_erl,
             ki_gender_protection,
             data
       )
@@ -252,13 +219,6 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
       #ODK forms
       agg_method_all<-as.data.frame(filter(survey, type!="begin_group", type!="note",type!="end_group"))
       choices<-dico
-      #
-      ch_fieldname<-"gname_label" #initially developed for gname
-      
-      #temporarily rename the field gname to gname_code and gname_label to gname
-      #choices<-choices %>% rename("gname_code"=gname) %>% rename("gname"="gname_label")
-      
-      
       #data
       db_all<-data
       ###############--------RECODE ORDINAL TO SCORE------------###################
@@ -371,7 +331,7 @@ for (i_s in 1:nrow(d_agg_sectors)){
     while(j<ncol(db)){
       j<-j+1
       #j=21 for testing
-      #j<-142 for select multiple
+      #j<-225 for select multiple
     ##--AGG PREP BLOCK--
       #this block of code identifies the following for each columns
       # - agg_method (aggregation method)
@@ -400,7 +360,7 @@ for (i_s in 1:nrow(d_agg_sectors)){
       }
       
       ##check if the question is split var with related
-      if (str_detect(agg_heading,"/SPLIT_VAR_SEL1_REL") | str_detect(agg_heading,"/SPLIT_VAR_SEL1_RALL") | str_detect(agg_heading,"/SPLIT_VAR_SEL_1_RALL")){
+      if (str_detect(agg_heading,"/SPLIT_VAR_SEL1_REL") | str_detect(agg_heading,"/SPLIT_VAR_SEL1_RALL")){
         #gather group name
         t_p<-str_locate(agg_heading,"/SPLIT_VAR")
         t_str<-substr(agg_heading,1,t_p-1)
@@ -423,19 +383,8 @@ for (i_s in 1:nrow(d_agg_sectors)){
           }
       }
       
-      #check one more time for the select_multiple but analysed as select_one type
-      split_heading<-strsplit(agg_heading,split="/")[[1]] 
-      i_str<-which(agg_method_all$name %in% split_heading)
-      if(length(i_str)>0){
-        if (agg_method_all$aggmethod[i_str][1]=="SEL_1_BIN_YESNO" && agg_method_all$qtype[i_str][1]=="select_multiple"){
-          check<-agg_method_all$gname[i_str][1]
-        }
-      }
-      
       ### find out the heading in the agg_method table from CHECK
       indexagg<-which(agg_method_all$gname%in%check)
-      
-      
       if(length(indexagg)==0){
           non_agg<-TRUE
           i_sector<-"NA" #sector of the data - individual column
@@ -1063,92 +1012,7 @@ for (i_s in 1:nrow(d_agg_sectors)){
             rm(list=c("ldt","d","f","vn_agg","vn_col_i","vn_w_col_i","vn_cf_level","vn_weight"))
 
             #write_csv(db_agg,paste0(j,".csv"),na='NA')
-      #SELECT ONE
-      #YES/NO Binary response
-            
-          }else if(i_aggmethod=="SEL_1_BIN_YESNO"){
-            d<-"a"
-            vn_agg<-db_heading[j]
-            #prepare confidence level for weight
-            vn_weight<-vn_cf_level
-            d_weight_i<-conv_num(cf_level)
-            #i_vn_cf_level<-vn_cf_level
-            f<-c(agg_level_colnames,vn_agg,vn_weight)
-            ldt<-db %>% 
-              select_at(vars(f)) %>%
-              na.omit() %>% 
-              mutate_at(.vars=vars(vn_weight),.funs=funs(as.numeric(as.character(.)))) 
-            #find the column index for the current aggregation variable
-            vn_col_i<-which(names(ldt)==vn_agg)#cf_level also
-            vn_w_col_i<-which(names(ldt)==vn_weight)
-            #ldt[,vn_col_i]<-ifelse(ldt[,vn_col_i]=="NA" | ldt[,vn_col_i]=="NaN" | is.nan(ldt[,vn_col_i]),NA,ldt[,vn_col_i])
-            #-----------------------------------------------#
-            #d<-"a"
-            #vn_agg<-names(db)[j]
-            #i_cf_level<-conv_num(cf_level)
-            #ldt<- na.omit(data.frame(db[,which(names(db)==agg_level_colnames)],db[,j],i_cf_level))
-            i_heading<-c(agg_level_colnames,vn_agg,vn_weight)
-            if(nrow(ldt)==0){
-              ldt <- get_empty_dataframe(db, i_heading)
-            }
-            #write.csv(ldt,"./data/data_final/sel1_rank00_ldt.csv")
-            ###bring weight for each variable from 'choices' sheet
-            #identify the row and get lookup table
-            # d_lk<-choices %>% filter(gname_full==vn_agg) %>% 
-            #   select(labelchoice,vweight) %>% 
-            #   mutate_at(.vars=vars(vweight),.funs=funs(as.numeric(as.character(.)))) 
-            # names(d_lk)[1]<-vn_agg
-            # 
-            # ##bring weight to the data
-            # ldt<-ldt %>% left_join(d_lk,by=vn_agg)
-            #a place holder
-              ldt$vweight<-1
-            # 
-            
-            ldt<-ldt %>% ungroup() %>% 
-              mutate_at(vars(vn_weight),funs(.*vweight)) %>% 
-              group_by_at(.vars=vars(agg_level_colnames,vn_agg)) %>% 
-              summarise_at(vars(vn_weight),funs(sum(.,na.rm=TRUE))) %>%
-              ungroup()
-            # ldt<-ldt %>% group_by_(agg_level_colnames,as.name(vn_agg))%>%
-            #              summarise(cf_level=sum(cf_level,na.rm=TRUE)) %>%
-            #              ungroup()
-            
-            ldt_count<-ldt %>% group_by_at(agg_level_colnames)%>%
-              summarise(n_record=n()) %>%
-              ungroup()
-            
-            ldt<-left_join(ldt,ldt_count,by=agg_level_colnames)
-            #write_csv(ldt,"ldt_a.csv")
-            ldt<-as.data.frame(ldt)
-            #if count more than one and values are do not know or no answer -> change it to NA
-            l_col_i<-which(names(ldt)=="n_record")
-            ###some changes here
-            d<-ldt %>% ungroup() %>% 
-              group_by_at(.vars=vars(agg_level_colnames)) %>% 
-              mutate_at(vars(vn_weight),funs(rank=rank(-.,ties.method = 'min'))) %>%
-              ungroup()
-            ##now select rank 1 only
-            d<-filter(d,rank==1) %>% 
-              group_by_at(.vars=vars(agg_level_colnames)) %>% 
-              mutate_at(vars("rank"),funs(n_samerank=n())) %>%
-              ungroup()
-            
-            d[d$n_samerank>1,c(vn_agg)]<-1 #if Both YES/NO - then YES
-            #Get UNIQUE here
-            f<-c(agg_level_colnames,vn_agg)
-            d<-d %>% select_at(vars(f)) %>% distinct()
-            
-            
-            #JUST INCASE
-            if(nrow(d)==0){
-              d <- get_empty_dataframe(db, f)
-            }
-            #
-            db_agg<-left_join(db_agg,d,by=agg_level_colnames)
-            rm(list=c("ldt","d","f","vn_agg","vn_col_i","vn_w_col_i","vn_cf_level","vn_weight"))
-            
-            #write_csv(db_agg,paste0(j,".csv"),na='NA')  
+         
       #SELECT ONE - special case for protection sector request
             # For questions which have Yes, No and Sometimes
             # If only one category is chosen by all the KIs , take that category.
