@@ -115,8 +115,170 @@ select_all_score2zo_vweight <- function(data1, choices1) {
   }
   NULL
 
+  ####--------------------------------------------####
+  # with weight of the variable
+  # treatment of do not know and no answer
+  #instead of returning 1/0, return actual number of responses
+  select_all_keep_score_vweight <- function(data1, choices1) {
+    print(paste0("Recode select all values to 1/0 considering variable weight"))
+    ### First we provide attribute label to variable name
+    #data.label <- as.data.frame(names(data))
+    #data<-as.data.frame(data,stringsAsFactors=FALSE,check.names=FALSE)
+    data_names<-names(data1)
+    #-select all the field headers for select one
+    agg_m_sall<-filter(choices1,aggmethod=="SEL_ALL" | aggmethod=="SEL_ALL_EQ")
+    #--loop through all the rows or take all value
+    agg_m_sall_headers<-distinct(as.data.frame(agg_m_sall[,"gname"]))
+    data_rec<-as.data.frame(data1) # dont see any reason to do it
+    
+    for(i in 1:nrow(agg_m_sall_headers)){
+      i_headername<-agg_m_sall_headers[i,1]
+      #column index from the data
+      col_ind<-which(str_detect(data_names, paste0(i_headername,"/")) %in% TRUE)
+      #Replace only if header is found in the main data table
+      if (length(col_ind)>0){
+        #loop through each index
+        for (i_lt in col_ind){
+          #i_lt=2
+          d_i_lt<-as.numeric(as.character(data_rec[,i_lt])) #convert to number
+          #data_rec[,i_lt]<-ifelse(d_i_lt>0,1,data_rec[,i_lt]) ##greater than ZERO - means answered
+        }
+      }
+      
+      ###perform below operation if there are more than one columns
+      ### otherwise simple above operation is enough
+      ### no rowwise ranking is necessary if it has single column
+      if (length(col_ind)>1){
+        ###-----below steps are done to handle do not know or no answer------
+        list_rnk<- select(data_rec, col_ind) %>% as.data.frame()
+        #as.data.frame(data_rec[,col_ind])
+        # convert to numeric first
+        # and then replace 1 by variable weight (vweight - low weight) for
+        # do not know and no answer
+        # this is done to exclude do not know and no answer if any other variable
+        # has an answer
+        #
+        for (i_list in 1:ncol(list_rnk)){
+          #convert to numeric
+          list_rnk[,i_list]<-as.numeric(as.character(list_rnk[,i_list]))
+        }
+        #keep it as a score
+        list_rnk_score<-list_rnk
+        
+        #-------get rank for the score-----------#
+        #multiply by variable weight from choices sheet
+        #This is done to consider do not know or No answer situation
+        #If sum is greater than or equal to 1, then convert it to 1.
+        for (i_list in 1:ncol(list_rnk)){
+          #convert to numeric
+          #list_rnk[,i_list]<-as.numeric(as.character(list_rnk[,i_list]))
+          ###------if do not know or no answer, substitute by small number
+          var_headername<-names(list_rnk)[i_list]
+          #var_name<-split_headername_get_varname(names(list_rnk)[i_list],"/")
+          ###return to the original name
+          #var_name<-gsub("_","/",var_name)
+          ##replace if it is part of do not know or no answer field
+          #if (var_name %in% dnk_no_ans_label_list){
+          ##get the weight for the variable
+          #d_lk<-filter(choices1,gname_full_mlabel==var_headername) #should return one row
+          d_lk<-filter(choices1,gname_full==var_headername) #should return one row
+          ##if it is found in the data
+          if (nrow(d_lk)>0){
+            vw<-as.numeric(d_lk$vweight[1])##first row - by default it should return ONE row only
+          }else{vw<-1}
+          #list_rnk[,i_list]<-ifelse(list_rnk[,i_list]==1,vw,list_rnk[,i_list])
+          list_rnk[,i_list]<-list_rnk[,i_list]*vw
+          #----------here you can change >=1 to 1..............
+          ##greater than or equal to ONE - means answered plus NO Do not know
+          list_rnk[,i_list]<-ifelse(list_rnk[,i_list]>=1,1,list_rnk[,i_list]) 
+          #}
+        }## all replacement of score is done
+        
+        # to check if list_rnk has one or more fields - if only one field - this one does not work
+        # in case one one columns only, no need for rowwise ranking.
+        d_rank<-t(apply(list_rnk,1,function(x) rank(-x,na.last="keep", ties.method = "min")))
+        d_rank<-as.data.frame(d_rank)
+        # JUST INCASE data has all ZERO in the row,
+        # rowwise rank returns 1. Replace it back to ZERO.
+        #Zero removed - ZERO in the main table is substituted with ZERO
+        for(ir in 1:ncol(d_rank)){
+          d_rank[,ir]<-ifelse(list_rnk[,ir]==0,0,d_rank[,ir])
+        }
+        ##for second or third rank, change to 0
+        ##this works are score is already reduced to 1.
+        ##1 value should get rank 1
+        for (i_lt in 1:ncol(d_rank)){
+          d_rank[,i_lt]<-ifelse(d_rank[,i_lt]>1,0,d_rank[,i_lt])
+        }
+        #Replace by number of responses
+        #Bring back number of responses only if
+        #rank is assigned >=1
+        for(ir in 1:ncol(d_rank)){
+          d_rank[,ir]<-ifelse(d_rank[,ir]>=1,list_rnk_score[,ir],d_rank[,ir])
+        }
+        #Replace values in the main table
+        data_rec[,col_ind]<-d_rank
+      }
+      ##if length >0 i.e. header found in the data
+    }#finish recoding of select one ORDINAL
+    return(data_rec)
+  }
+  NULL
 
-
+  select_multiple_answer2one <- function(data1, choices1) {
+    print(paste0("Select multiple answers to values to 1/0"))
+    ### First we provide attribute label to variable name
+    #data.label <- as.data.frame(names(data))
+    #data<-as.data.frame(data,stringsAsFactors=FALSE,check.names=FALSE)
+    #-select all the field headers for select one
+    agg_m_sall<-filter(choices1,aggmethod=="SEL_ALL" | aggmethod=="SEL_ALL_EQ")
+    #--loop through all the rows or take all value
+    agg_m_sall_headers<-distinct(as.data.frame(agg_m_sall[,"gname"]))
+    data_rec<-as.data.frame(data1) # dont see any reason to do it
+    
+    for(i in 1:nrow(agg_m_sall_headers)){
+      i_headername<-agg_m_sall_headers[i,1]
+      vn_header<-i_headername
+      #names of the header
+      data_names<-names(data_rec)
+      #check if columns exists or not
+      vn_ind<-which(data_names==vn_header)
+      #if not found - add to the data
+      #find where to add first
+      if (length(vn_ind)==0){
+        #column index from the data
+        col_ind<-which(str_detect(data_names, paste0(i_headername,"/")) %in% TRUE)
+            #Replace only if header is found in the main data table
+            if (length(col_ind)>0){
+                last_col<-col_ind[length(col_ind)]
+                vn_ind = last_col+1
+               #now add the field to the data
+                data_rec<-data.frame(append(data_rec, vn_header , after =  last_col),check.names=FALSE,stringsAsFactors=F)
+                names(data_rec)[vn_ind]<-gsub("\"","",names(data_rec)[vn_ind])
+                data_rec[,vn_ind]<-NA
+            }
+      }#finish checking the header and amending the column
+   
+    #loop through each index
+   #add 1 to vn_ind if it is 1.
+      col_ind<-which(str_detect(names(data_rec), paste0(i_headername,"/")) %in% TRUE)
+      if (length(col_ind)>0){
+            for (i_lt in col_ind){
+              #i_lt=2
+              #print (paste0("col_ind->", i_lt, "---vn_ind->",vn_ind))
+              d_i_lt<-conv_num(data_rec[,i_lt])
+              
+              #transfer to the main data record
+              data_rec[,vn_ind]<-ifelse(d_i_lt==1,1,data_rec[,vn_ind])
+            }  
+      }
+    }#for each header 
+    return(data_rec)
+  }
+  NULL
+  
+  
+  
 ####-----------------------------------------------------------------#####
 ### SELECT ONE IS SPLIT INTO MULTIPLE COLUMNS AND RETAIN ALL ANSWERS
 # This is equivalent to SELECT ALL APPLICABLE QUESTION.

@@ -223,6 +223,61 @@ split_select_one_all_transfer<-function(db,choices){
   return(db_rec)
 }
 
+
+
+##----------------SEL1_RALL------FOR Select ONE Transfer 1 to Answer--------------------------###
+split_select_one_answer2one_transfer<-function(db,choices){
+  print(paste0("Split select_one questions answer to ONE Transfer: ", Sys.time()))
+  #variable initialization
+  vn<-"0"
+  vn_name<-"0"
+  vn_group<-"0"
+  vn_rank<-"0"
+  
+  ##CASE 1 - Select_one
+  #-select all the field headers for select one and Rank
+  #ch_s1<-choices[choices$aggmethod=="RANK3" | choices$aggmethod=="RANK4" ,]
+  ch_s1<-as.data.frame(filter(choices,aggmethod=="SEL1_RALL" | aggmethod=="SEL_1_RALL"))
+  #--loop through all the rows or take all value
+  ch_s1_headers<-distinct(as.data.frame(ch_s1[,c("name","qrankgroup","aggmethod","gname")]))
+  #names(ch_s1_headers)[1]<-"qrankgroup"
+  db_rec<-db # dont see any reason to do it
+  #check Q_1/Q_K1/Q_K1_D = row26
+  for(i in 1:nrow(ch_s1_headers)){
+    #---extract gname=header name in data, namechoice and label choice
+    #i=1
+    i_vn_name<-ch_s1_headers[i,c("name")]
+    i_vn_group<-ch_s1_headers[i,c("qrankgroup")]
+    i_vn_gname<-ch_s1_headers[i,c("gname")]
+    i_aggmethod<-ch_s1_headers[i,c("aggmethod")]
+    #column index for the variable
+    vn_ind<-which(names(db_rec)==i_vn_gname)
+    
+    #column index from the data
+    col_ind<-which(str_detect(names(db_rec),paste0(i_vn_gname,"/"))%in%TRUE)
+    
+    if((length(col_ind)>0) && (length(vn_ind)>0)){
+      ###Loop through each column
+        for (i_lt in col_ind){
+          #i_lt=2
+          #print (paste0("col_ind->", i_lt, "---vn_ind->",vn_ind))
+          d_i_lt<-as.data.frame(conv_num(db_rec[,i_lt]))
+          names(d_i_lt)[1]<-names(db_rec)[i_lt]
+          ##
+          d_i_lt[,1]<-ifelse(is.na(d_i_lt[,1]),0,d_i_lt[,1])
+          #d_i_lt<-ifelse(is.na(d_i_lt),0,d_i_lt)
+          #transfer to the main data record
+          db_rec[,vn_ind]<-ifelse(d_i_lt[,1]==1,1,db_rec[,vn_ind])
+        }  
+      }
+    }#for each header
+  #write_csv(db_rec,gsub(".xlsx","_RANK_SPLIT_CHECKS.csv",data_fname),na='NA')
+  print(paste0("Split select_one questions for ALL transfer: DONE ", Sys.time()))
+  return(db_rec)
+}
+
+
+
 ##----------------SEL1_REL------Transfer value from the Related fied------in 'group' column---------------------###
 split_select_one_related_q_value_transfer<-function(db,choices){
   print(paste0("Split select_one questions Transfer Value from Related field: ", Sys.time()))
@@ -235,7 +290,7 @@ split_select_one_related_q_value_transfer<-function(db,choices){
   ##CASE 1 - Select_one
   #-select all the field headers for select one and Rank
   #ch_s1<-choices[choices$aggmethod=="RANK3" | choices$aggmethod=="RANK4" ,]
-  ch_s1<-as.data.frame(filter(choices,aggmethod=="SEL1_REL"))
+  ch_s1<-as.data.frame(filter(choices,aggmethod=="SEL1_REL" | aggmethod=="SEL_1_REL"))
   #--loop through all the rows or take all value
   ch_s1_headers<-distinct(as.data.frame(ch_s1[,c("name","qrankgroup","aggmethod","gname","group")]))
   #names(ch_s1_headers)[1]<-"qrankgroup"
