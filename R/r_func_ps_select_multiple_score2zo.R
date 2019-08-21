@@ -269,7 +269,7 @@ select_all_score2zo_vweight <- function(data1, choices1) {
               d_i_lt<-conv_num(data_rec[,i_lt])
               
               #transfer to the main data record
-              data_rec[,vn_ind]<-ifelse(d_i_lt==1,1,data_rec[,vn_ind])
+              data_rec[,vn_ind]<-ifelse(d_i_lt>=0,1,data_rec[,vn_ind])
             }  
       }
     }#for each header 

@@ -10,7 +10,9 @@ source("./R/91_r_ps_kobo_library_init.R")
 #data_fname<-"./Data/100_Aggregation/SAMPLE_FOR_TESTING_MSNA2018_RAW_data_merged.xlsx"
 
 ##FINAL DATA
-data_fname<-"./Data/100_Aggregation/MSNA_Protection_KI_DataRow_18072019.xlsx"
+#data_fname<-"./Data/100_Aggregation/MSNA Protection KI RawData 14082019 - logical transfer V2.xlsx"
+data_fname<-"./Data/100_Aggregation/MSNA Protection KI RawData 14082019 - logical transfer V2_EnumGender.xlsx"
+
 nameodk<-"./xlsform/MSNA2019_KI_PR/MSNA2019_KI_Protection_Kobo_file_V3_agg_method.xlsx"
 
 ###FOR WORST CASE
@@ -20,8 +22,8 @@ nameodk<-"./xlsform/MSNA2019_KI_PR/MSNA2019_KI_Protection_Kobo_file_V3_agg_metho
 #ptm_start<-proc.time()
 start_time <- as.numeric(as.numeric(Sys.time())*1000, digits=10) # place at start
 ##agg geographic level or geographic plus another variable
-flag_agg_level<-"GEO"
-#flag_agg_level<-"GEO_PLUS_VARS"
+#flag_agg_level<-"GEO"
+flag_agg_level<-"GEO_PLUS_VARS"
 
 #List of Do not know and No answer list - collected from choices sheet
 dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
@@ -45,7 +47,11 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
       
       #ODK forms
       agg_method_all<-as.data.frame(filter(survey, type!="begin_group", type!="note",type!="end_group"))
-      choices<-dico
+      choices<-dico %>% filter(qtype!="begin_group") %>% 
+                        filter (qtype!="end_group") %>% 
+                        filter (qtype!="note")
+      
+                        
       #
       ch_fieldname<-"gname_label" #initially developed for gname
       
@@ -72,16 +78,22 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
       #   data[,kl]<-ifelse(data[,kl]=="NULL",NA,data[,kl])
       # }
       
+      #change to date
+      datefield<-"SECTION B: COMMUNITY SOURCE METADATA/K.4 Date of the interview"
+      i_datefield<-which(names(data)==datefield)
+      #convert to date
+      data<-data %>% mutate_at(.vars=vars(datefield),.funs=funs(as.character(as.Date(as.numeric(as.character(.)),origin="1899-12-30"))))
+      
       #MSNA2019---rename field headers to match with code
       #some cleanup of the data
       for (kl in 1:ncol(data)){
         i_colname<-names(data)[kl]
         #find the colname in choices file
-        ch_headers<-distinct(as.data.frame(choices[,c("gname","gname_full","gname_full_label")])) %>% 
+        ch_headers<-distinct(as.data.frame(choices[,c("qtype", "label","gname","gname_full","gname_full_label")])) %>% 
                     filter(!is.na(gname))
+        #check for type of question if qtype is "select_multiple"
         #find out the recod for field name
         lookup_table<-filter(ch_headers,gname_full_label==i_colname)
-        
         if(nrow(lookup_table)>0){
           i_colname_code<-lookup_table$gname_full[1]#take the first one. It should return only one.
           #
@@ -89,7 +101,6 @@ dnk_no_ans_label_list<-c("No answer","no answer", "Dont know","Do not know",
           names(data)[kl]<-i_colname_code
           
         }else{i_colname_code<-i_colname} #don't change
-        
       }
       
       write_csv(data,gsub(".xlsx","_Step01_RENAME_FIELD_HEADERS.csv",data_fname),na='NA')
